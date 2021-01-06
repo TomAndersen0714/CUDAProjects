@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <math.h>
 
-int fun(void) {
+#ifndef __TEST_C__
+#define __TEST_C__
+
+__TEST_C__ int fun(void) {
     //printf("%lld", sizeof(float*));
     return 0;
 }
+#endif // __TEST_C__
 
 int main() {
     // 当函数的参数列表为空时,并不是代表无法传入参数,而是代表参数的个数无法确定.要想
