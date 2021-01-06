@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\sumArraysOnDevice.cu" />
+    <CudaCompile Include="src\checkDimension.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0485314C-5CC5-44E5-8936-56C7E8E5594B}</ProjectGuid>

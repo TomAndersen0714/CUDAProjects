@@ -35,23 +35,23 @@ void printFloatArray(float arr[], int count) {
     printf("\n");
 }
 
-int main() {
+int main(void) {
     // Define size of array.
-    int count = 32;
-    size_t numberSize = count * sizeof(float);
+    int num = 32;
+    size_t numberSize = num * sizeof(float);
 
-    // Allocate the memory for float arrays.
+    // Allocate memory space for float arrays.
     float *h_a = (float *)malloc(numberSize);
     float * h_b = (float *)malloc(numberSize);
     float * h_c = (float *)malloc(numberSize);
 
     // Initial the float array.
-    initialData(h_a, count);
-    initialData(h_b, count);
+    initialData(h_a, num);
+    initialData(h_b, num);
 
     // Calculate the sum of array.
-    sumArrayOnHost(h_a, h_b, h_c, count);
-    printFloatArray(h_c, count);
+    sumArrayOnHost(h_a, h_b, h_c, num);
+    printFloatArray(h_c, num);
 
     // Release allocated memory.
     free(h_a);

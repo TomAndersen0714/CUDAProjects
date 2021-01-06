@@ -8,7 +8,7 @@ __global__ void helloFromGPU() {
     printf("Hello World! This is CPU(Host) thread %d .\n", threadIdx.x);
 }
 
-int main() {
+int main(void) {
     using namespace std;
     cout << "Hello world from CPU!\n" << endl;
     // Say "Hello World" from CPU(Host).
