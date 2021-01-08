@@ -11,7 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\checkDimension.cu" />
+    <CudaCompile Include="src\sumArraysOnGPU-timer.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\cudaTool.cuh" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0485314C-5CC5-44E5-8936-56C7E8E5594B}</ProjectGuid>

@@ -1,15 +1,17 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+#include "cudaTool.cuh"
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
-void sumArraysOnDevice(float *a, float *b, float *c, const int num) {
-    for (int i = 0; i < num; i++) {
-        c[i] = a[i] + b[i];
-    }
+#ifndef CHECK_ERROR
+#define CHECK_ERROR(call)                                                       \
+{                                                                               \
+    const cudaError_t error = call;                                             \
+    if(error != cudaError::cudaSuccess){                                        \
+        printf("Error: %s:%d,  ", __FILE__, __LINE__);                          \
+        printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));      \
+        exit(1);                                                                \
+    }                                                                           \
 }
+#endif // !CHECK_ERROR(call)
+
 
 void initialData(float *arr, int num) {
     // Generate different seed for random numbers.
@@ -27,13 +29,16 @@ void printFloatArray(float arr[], int num) {
     if (arr == NULL) return;
     // int num = sizeof(arr) / sizeof(float);
     for (int i = 0; i < num; i++) {
-        printf("%.2f\n", arr[i]);
+        printf("%d: %.2f\n", i, arr[i]);
     }
     printf("\n");
 }
 
 
 int main() {
+    // Set the device which to use.
+    cudaSetDevice(0);
+
     // Initial the variables.
     int num = 32;
     size_t arrayByteSize = num * sizeof(float);
@@ -45,9 +50,9 @@ int main() {
 
     // Allocate memory space for arrays in device.
     float *d_a, *d_b, *d_c;
-    cudaMalloc((float**)&d_a, arrayByteSize);
-    cudaMalloc((float**)&d_b, arrayByteSize);
-    cudaMalloc((float**)&d_c, arrayByteSize);
+    CHECK_ERROR(cudaMalloc((float**)&d_a, arrayByteSize));
+    CHECK_ERROR(cudaMalloc((float**)&d_b, arrayByteSize));
+    CHECK_ERROR(cudaMalloc((float**)&d_c, arrayByteSize));
 
     // Initial the float array.
     initialData(h_a, num);
@@ -55,24 +60,26 @@ int main() {
 
     // Copy arrays from host to device.The host will be hanged up until this
     // method return.
-    cudaMemcpy(d_a, h_a, arrayByteSize, cudaMemcpyKind::cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, h_b, arrayByteSize, cudaMemcpyKind::cudaMemcpyHostToDevice);
+    CHECK_ERROR(cudaMemcpy(d_a, h_a, arrayByteSize, cudaMemcpyKind::cudaMemcpyHostToDevice));
+    CHECK_ERROR(cudaMemcpy(d_b, h_b, arrayByteSize, cudaMemcpyKind::cudaMemcpyHostToDevice));
 
     // Calculate sum on device by kernal function.
-    //
-    //
+    sumArraysOnDevice << <1, num >> > (d_a, d_b, d_c);
+
+    // Let host wait for device finish.
+    CHECK_ERROR(cudaDeviceSynchronize());
 
     // Copy the result from device to host.
-    cudaMemcpy(h_c, d_c, arrayByteSize, cudaMemcpyKind::cudaMemcpyDeviceToHost);
+    CHECK_ERROR(cudaMemcpy(h_c, d_c, arrayByteSize, cudaMemcpyKind::cudaMemcpyDeviceToHost));
     printFloatArray(h_c, num);
 
     // Release the memory allocated space.
-    free(d_a);
-    free(d_b);
-    free(d_c);
-    cudaFree(d_a);
-    cudaFree(d_b);
-    cudaFree(d_c);
+    free(h_a);
+    free(h_b);
+    free(h_c);
+    CHECK_ERROR(cudaFree(d_a));
+    CHECK_ERROR(cudaFree(d_b));
+    CHECK_ERROR(cudaFree(d_c));
 
     // Return exit signal.
     return 0;
