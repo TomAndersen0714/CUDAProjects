@@ -47,6 +47,12 @@ int main(int argv, char** args) {
     int sizeOfBlock = 512;
     dim3 block(sizeOfBlock);
     dim3 grid((nElem + block.x - 1) / block.x);
+    
+    // Warming up device to avoid measuring error.
+    clock = unixMillisecondTimestamp();
+    warmingUp << <grid, block >> > (d_a, d_b, d_c, nElem);
+    CHECK_ERROR(cudaDeviceSynchronize());
+    printf("warmingUp elapsed time: %lld ms.\n", unixMillisecondTimestamp() - clock);
 
     clock = unixMillisecondTimestamp();
     sumArraysOnDevice << <grid, block >> > (d_a, d_b, d_c, nElem);

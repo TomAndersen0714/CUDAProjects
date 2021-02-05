@@ -15,7 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\sumArrayOnHost.cpp">
+    <ClInclude Include="src\templateTest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\test.cc">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

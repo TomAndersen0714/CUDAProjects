@@ -18,16 +18,10 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\templateTest.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\test.cc" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{02981D35-0448-4847-9D6C-60E08E7EDE9E}</ProjectGuid>
+    <ProjectGuid>{9F9C7138-4445-4A38-ADBE-AB9AFD1D4BFD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>CPPTest</RootNamespace>
+    <RootNamespace>TimeSeriesCompression_C</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -94,7 +88,6 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,8 +101,6 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,7 +116,6 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,7 +133,6 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,6 +141,24 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\tools\bit_reader.h" />
+    <ClInclude Include="src\tools\bit_writer.h" />
+    <ClInclude Include="src\tools\compressors.h" />
+    <ClInclude Include="src\tools\data_types.h" />
+    <ClInclude Include="src\tools\decompressors.h" />
+    <ClInclude Include="src\tools\encode_utils.h" />
+    <ClInclude Include="src\tools\io_utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\tools\bitpack.c" />
+    <ClCompile Include="src\tools\bucket.c" />
+    <ClCompile Include="src\tools\decompressors.c" />
+    <ClCompile Include="src\tools\gorilla.c" />
+    <ClCompile Include="src\tools\io_utils.c" />
+    <ClCompile Include="src\tools\rle.c" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

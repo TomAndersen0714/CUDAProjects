@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "templateTest.h"
 
 void fun() {
     using namespace std;
@@ -36,14 +37,21 @@ void printFloatArray(float arr[], int count) {
 }
 
 int main(void) {
+    // C++ 中无参构造唯二的两种调用方式
+    TemplateTest<char> test1 = TemplateTest<char>();
+    TemplateTest<int> test2;
+    test1.printfTypeSize();
+    test2.printfTypeSize();
+
     // Define size of array.
     int num = 32;
     size_t numberSize = num * sizeof(float);
 
     // Allocate memory space for float arrays.
     float *h_a = (float *)malloc(numberSize);
-    float * h_b = (float *)malloc(numberSize);
-    float * h_c = (float *)malloc(numberSize);
+    float *h_b = (float *)malloc(numberSize);
+    float *h_c = (float *)malloc(numberSize);
+
 
     // Initial the float array.
     initialData(h_a, num);

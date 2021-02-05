@@ -1,7 +1,9 @@
-#pragma once
+#ifndef _CUDA_TOOL_H_
+#define _CUDA_TOOL_H_
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -9,43 +11,48 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#ifndef __CUDA__TOOL__
-#define __CUDA__TOOL__
+// Define error check function.
+//#ifndef CHECK_ERROR
+//#define CHECK_ERROR(cudaError_t call)                                                       \
+//{                                                                               \
+//    const cudaError_t error = call;                                             \
+//    if(error != cudaError::cudaSuccess){                                        \
+//        printf("Error: %s:%d,  ", __FILE__, __LINE__);                          \
+//        printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));      \
+//        exit(1);                                                                \
+//    }                                                                           \
+//}
+//#endif // !CHECK_ERROR(call
 
-typedef unsigned __int64 u_int64;
+__device__ uint64_t getThreadIdxOfGrid(void) {
+    uint64_t threadOfBlock =
+        blockDim.x * blockDim.y * blockDim.z;
+    uint64_t blockIdxOfGrid =
+        blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
+    uint64_t threadIdxOfBlock =
+        threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
+    return threadOfBlock * blockIdxOfGrid + threadIdxOfBlock;
+}
 
 // Define error check function.
-#ifndef CHECK_ERROR
-#define CHECK_ERROR(call)                                                       \
-{                                                                               \
-    const cudaError_t error = call;                                             \
-    if(error != cudaError::cudaSuccess){                                        \
-        printf("Error: %s:%d,  ", __FILE__, __LINE__);                          \
-        printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));      \
-        exit(1);                                                                \
-    }                                                                           \
-}
-#endif // !CHECK_ERROR(call
+__host__ void CHECK_ERROR(const cudaError_t error) {
 
-__device__ u_int64 getThreadIdxOfGrid(void) {
-    u_int64 threadOfBlock =
-        blockDim.x * blockDim.y * blockDim.z;
-    u_int64 blockNumOfGrid =
-        blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
-    u_int64 threadNumOfBlock =
-        threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
-    return threadOfBlock * blockNumOfGrid + threadNumOfBlock;
+    if (error != cudaError::cudaSuccess) {
+        printf("Error: %s:%d,  ", __FILE__, __LINE__);
+        printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));
+        exit(1);
+    }
 }
 
 // Get unix timestamp in seconds at current moment.
-__host__ __int64 unixSecondTimestamp(void) {
+__host__ int64_t unixSecondTimestamp(void) {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts.tv_sec;
 }
 
 // Get unix timestamp in milliseconds at current moment.
-__host__  __int64 unixMillisecondTimestamp(void) {
+__host__  int64_t unixMillisecondTimestamp(void) {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
@@ -106,18 +113,28 @@ __host__ void sumArraysOnHost(float *a, float *b, float *c, const int n) {
 }
 
 __global__ void sumArraysOnDevice(float *a, float *b, float *c) {
-    u_int64 threadIdxOfGrid = getThreadIdxOfGrid();
+    uint64_t threadIdxOfGrid = getThreadIdxOfGrid();
     c[threadIdxOfGrid] = a[threadIdxOfGrid] + b[threadIdxOfGrid];
 }
 
 __global__ void sumArraysOnDevice(float *a, float *b, float *c, const int n) {
-    u_int64 threadIdxOfGrid = getThreadIdxOfGrid();
+    uint64_t threadIdxOfGrid = getThreadIdxOfGrid();
     if (threadIdxOfGrid < n) {
         c[threadIdxOfGrid] = a[threadIdxOfGrid] + b[threadIdxOfGrid];
     }
 }
 
+__global__ void warmingUp(float *a, float *b, float *c) {
+    uint64_t threadIdxOfGrid = getThreadIdxOfGrid();
+    c[threadIdxOfGrid] = a[threadIdxOfGrid] + b[threadIdxOfGrid];
+}
 
+__global__ void warmingUp(float *a, float *b, float *c, const int n) {
+    uint64_t threadIdxOfGrid = getThreadIdxOfGrid();
+    if (threadIdxOfGrid < n) {
+        c[threadIdxOfGrid] = a[threadIdxOfGrid] + b[threadIdxOfGrid];
+    }
+}
 
 #endif // !__CUDA__TOOL__
 
