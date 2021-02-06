@@ -154,7 +154,6 @@
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\tools\bitpack.c" />
     <ClCompile Include="src\tools\bucket.c" />
-    <ClCompile Include="src\tools\decompressors.c" />
     <ClCompile Include="src\tools\gorilla.c" />
     <ClCompile Include="src\tools\io_utils.c" />
     <ClCompile Include="src\tools\rle.c" />

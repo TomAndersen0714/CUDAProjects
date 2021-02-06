@@ -5,18 +5,14 @@
 #include "encode_utils.h"
 #include "bit_reader.h"
 
-//DataBuffer* timestamp_decompress(CompressedData* timestamps);
-//
-//DataBuffer* value_decompress(CompressedData* values);
+DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length);
 
-UncompressedData* timestamp_decompress_gorilla(ByteBuffer* timestamps);
+DataBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t length);
 
-UncompressedData* timestamp_decompress_rle(ByteBuffer* timestamps);
+DataBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t length);
 
-UncompressedData* value_decompress_gorilla(ByteBuffer* values);
+DataBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t length);
 
-UncompressedData* value_decompress_bitpack(ByteBuffer* values);
-
-UncompressedData* value_decompress_bucket(ByteBuffer* values);
+DataBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t length);
 
 #endif // _DECOMPRESSORS_H_

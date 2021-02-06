@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include "test.h"
 
 #ifndef __TEST_C__
@@ -46,11 +47,31 @@ typedef enum _numbers {
 static const char* separator = "------------------------------";
 
 int main(int argc, char* argv[]) {
+    // 测试int32_t类型正整数和uint32_t类型正整数之间相互转换是否会丢失精度(在int32_t类型最大值范围内)
+    int32_t int32_t_1 = 12;
+    uint32_t uint32_t_1 = (uint32_t)int32_t_1;
+    printf("%ld %lu\n", int32_t_1, uint32_t_1);
+    // 测试结果显示,当未超过int32_t类型的范围时,int32_t 和 uint32_t 之间能够直接进行转换
+
+    puts(separator);
+
+    // 测试 cstbool.h(C99) 中 bool 的实际值
+    bool bit1 = 1 == 1;
+    bool bit2 = false;
+    bool bit3 = 11 & 1;
+    bool bit4 = -1;
+    printf("%d %d %d %d\n", bit1, bit2, bit3, bit4);
+    // 测试结果表明,在C语言中 bool 实际上使用 0 表示false,使用非0表示true
+
+    puts(separator);
+
     // 测试修改*ptr对应值时,是否会影响ptr指向的原始变量值
     int a = 10, *ptr = &a;
     *ptr = 11;
     printf("%d\n", a); // 11
     // 测试结果表明,修改*ptr的值会改变ptr指向的原始变量值
+
+    puts(separator);
 
     // 当函数的参数列表为空时,并不是代表无法传入参数,
     // 而是代表参数的个数无法确定,在实际调用时能够接收任何数量的任何类型的参数.

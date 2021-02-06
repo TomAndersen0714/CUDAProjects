@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #define BITS_OF_BYTE 8
 #define BITS_OF_INT 32
@@ -45,11 +46,11 @@ typedef struct _ByteBuffer {
 
 
 // Struct of uncompressed buffer
-typedef struct _UncompressedData {
+typedef struct _DataBuffer {
     uint64_t *buffer;
     uint64_t length;
-    ValueType type;
-} UncompressedData;
+    //ValueType type;
+} DataBuffer;
 
 // Struct of data points
 typedef struct _DataPoitns {
@@ -80,7 +81,7 @@ typedef struct _CompressedData {
 
 // For scalability, define function pointer type for compression and 
 // decompression method
-typedef ByteBuffer *(*compressMethod)(UncompressedData*);
-typedef UncompressedData *(*decompressMethod)(CompressedData*);
+typedef ByteBuffer *(*compressMethod)(DataBuffer*);
+typedef DataBuffer *(*decompressMethod)(CompressedData*);
 
 #endif // _DATA_TYPES_H_

@@ -1,7 +1,7 @@
 #include "compressors.h"
+#include "decompressors.h"
 
-
-ByteBuffer * value_compress_bitpack(UncompressedData * values) {
+ByteBuffer * value_compress_bitpack(DataBuffer * values) {
     // Declare variables
     ByteBuffer *compressedValues;
     BitWriter* bitWriter;
@@ -73,4 +73,47 @@ ByteBuffer * value_compress_bitpack(UncompressedData * values) {
 
     // Return byte buffer.
     return compressedValues;
+}
+
+DataBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t length) {
+    // Declare variables
+    DataBuffer* dataBuffer;
+    BitReader* bitReader;
+    int64_t value, prevValue = 0;
+    uint32_t pos = DEFAULT_FRAME_SIZE, maxLeastSignificantBits = 0;
+    uint64_t diff, cursor = 0;
+
+    // Allocate memory space
+    dataBuffer = malloc(sizeof(DataBuffer));
+    assert(dataBuffer != NULL);
+    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
+    assert(dataBuffer->buffer != NULL);
+    dataBuffer->length = length;
+
+    bitReader = bitReaderConstructor(values);
+
+    // Decompress each timestamp from byte buffer
+    while (cursor < length) {
+
+        // If current compressed frame reach the end, read next maximum number of least
+        // significant bit.
+        if (pos == DEFAULT_FRAME_SIZE) {
+            maxLeastSignificantBits = (uint32_t)bitReaderNextLong(bitReader, 6);
+            pos = 0;
+        }
+        // Decompress the difference in current frame according to the value of maxLeastSignificantBits
+        diff = decodeZigZag64(bitReaderNextLong(bitReader, maxLeastSignificantBits));
+        // Restore the value.
+        value = diff + prevValue;
+
+        // update predictor and position.
+        prevValue = value;
+        pos++;
+
+        // return value;
+        // Store current value into data buffer
+        dataBuffer->buffer[cursor++] = value;
+    }
+
+    return dataBuffer;
 }

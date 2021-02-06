@@ -5,14 +5,14 @@
 #include "encode_utils.h"
 #include "bit_writer.h"
 
-ByteBuffer* timestamp_compress_gorilla(UncompressedData* timestamps);
+ByteBuffer* timestamp_compress_gorilla(DataBuffer* timestamps);
 
-ByteBuffer* timestamp_compress_rle(UncompressedData* timestamps);
+ByteBuffer* timestamp_compress_rle(DataBuffer* timestamps);
 
-ByteBuffer* value_compress_gorilla(UncompressedData* values);
+ByteBuffer* value_compress_gorilla(DataBuffer* values);
 
-ByteBuffer* value_compress_bitpack(UncompressedData* values);
+ByteBuffer* value_compress_bitpack(DataBuffer* values);
 
-ByteBuffer* value_compress_bucket(UncompressedData* values);
+ByteBuffer* value_compress_bucket(DataBuffer* values);
 
 #endif // _COMPRESSOR_H_

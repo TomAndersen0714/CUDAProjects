@@ -1,10 +1,11 @@
 #include "compressors.h"
+#include "decompressors.h"
 
-static const int32_t DELTA_7_MASK = 0b10 << 7;
-static const int32_t DELTA_9_MASK = 0b110 << 9;
-static const int32_t DELTA_12_MASK = 0b1110 << 12;
+static const uint32_t DELTA_MASK_7 = 0b10 << 7;
+static const uint32_t DELTA_MASK_9 = 0b110 << 9;
+static const uint32_t DELTA_MASK_12 = 0b1110 << 12;
 
-ByteBuffer* timestamp_compress_gorilla(UncompressedData* timestamps) {
+ByteBuffer* timestamp_compress_gorilla(DataBuffer* timestamps) {
     // Declare variables
     ByteBuffer *compressedTimestamps;
     BitWriter* bitWriter;
@@ -57,21 +58,22 @@ ByteBuffer* timestamp_compress_gorilla(UncompressedData* timestamps) {
             case 5:
             case 6:
             case 7:
-                ////
-                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_7_MASK, 9);
+                // '10'+7
+                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_7, 9);
                 break;
             case 8:
             case 9:
-                ////
-                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_9_MASK, 12);
+                // '110'+9
+                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_9, 12);
                 break;
             case 10:
             case 11:
             case 12:
-                ////
-                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_12_MASK, 16);
+                // '1110'+12
+                bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_12, 16);
                 break;
             default:
+                // '1111'+32
                 // Write '1111' control bits.
                 bitWriterWriteBits(bitWriter, 0b1111, 4);
                 // Since it only takes 4 bytes(i.e. 32 bits) to save a unix timestamp input second, we write
@@ -93,7 +95,7 @@ ByteBuffer* timestamp_compress_gorilla(UncompressedData* timestamps) {
     return compressedTimestamps;
 }
 
-ByteBuffer * value_compress_gorilla(UncompressedData * values) {
+ByteBuffer * value_compress_gorilla(DataBuffer * values) {
     // Declare variables
     ByteBuffer *compressedValues;
     BitWriter* bitWriter;
@@ -166,10 +168,8 @@ ByteBuffer * value_compress_gorilla(UncompressedData * values) {
                 */
                 bitWriterWriteBits(bitWriter, leadingZeros, 6);// Write the number of leading zeros input the next 6 bits
                 // Since 'significantBits == 0' is unoccupied, we can just store 'significantBits - 1' to
-                // cover a larger range and avoid the situation when 'significantBits == 64'.
-
-                // Write the length of meaningful bits input the next 6 bits
-                bitWriterWriteBits(bitWriter, significantBits - 1, 6);
+                // cover a larger range and avoid the situation when 'significantBits == 64
+                bitWriterWriteBits(bitWriter, significantBits - 1, 6);// Write the length of meaningful bits input the next 6 bits
 
                 // Write the meaningful bits of XOR
                 bitWriterWriteBits(bitWriter, diff >> trailingZeros, significantBits);
@@ -184,4 +184,159 @@ ByteBuffer * value_compress_gorilla(UncompressedData * values) {
 
     // Return byte buffer.
     return compressedValues;
+}
+
+DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length) {
+    // Declare variables
+    DataBuffer* dataBuffer;
+    BitReader* bitReader;
+    int64_t timestamp, prevTimestamp = 0;
+    int64_t newDelta, deltaOfDelta = 0, prevDelta = 0;
+    uint64_t cursor = 0;
+    uint32_t controlBits;
+
+    // Allocate memory space
+    dataBuffer = malloc(sizeof(DataBuffer));
+    assert(dataBuffer != NULL);
+    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
+    assert(dataBuffer->buffer != NULL);
+    dataBuffer->length = length;
+
+    bitReader = bitReaderConstructor(timestamps);
+
+    // Decompress each timestamp from byte buffer
+    while (cursor < length) {
+        controlBits = bitReaderNextControlBits(bitReader, 4);
+
+        switch (controlBits)
+        {
+        case 0b0:
+            // '0' bit (i.e. previous and current timestamp interval(delta) is same).
+            prevTimestamp = prevDelta + prevTimestamp;
+            // Store current timestamp into data buffer
+            dataBuffer->buffer[cursor++] = prevTimestamp;
+            continue;
+        case 0b10:
+            // '10' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 7 bits).
+            deltaOfDelta = bitReaderNextLong(bitReader, 7);
+            break;
+        case 0b110:
+            // '110' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 9 bits).
+            deltaOfDelta = bitReaderNextLong(bitReader, 9);
+            break;
+        case 0b1110:
+            // '1110' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 12 bits).
+            deltaOfDelta = bitReaderNextLong(bitReader, 12);
+            break;
+        case 0b1111:
+            // '1111' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 32 bits).
+            deltaOfDelta = bitReaderNextLong(bitReader, 32);
+            break;
+        default:
+            break;
+        }
+
+        // Decode the deltaOfDelta value.
+        deltaOfDelta = decodeZigZag32((int32_t)deltaOfDelta);
+        // Since we have decreased the 'delta-of-delta' by 1 when we compress the it,
+        // we restore it's value here.
+        if (deltaOfDelta >= 0) deltaOfDelta++;
+
+        // Calculate the new delta and timestamp.
+        //prevDelta += deltaOfDelta;
+        newDelta = prevDelta + deltaOfDelta;
+        //prevTimestamp += prevDelta;
+        timestamp = prevTimestamp + prevDelta;
+
+        // update prevDelta and prevTimestamp
+        prevDelta = newDelta;
+        prevTimestamp = timestamp;
+
+        // return prevTimestamp;
+        // Store current timestamp into data buffer
+        dataBuffer->buffer[cursor++] = prevTimestamp;
+    }
+
+    return dataBuffer;
+}
+
+DataBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t length) {
+    // Declare variables
+    DataBuffer* dataBuffer;
+    BitReader* bitReader;
+    int64_t value = 0, prevValue = 0, diff;
+    uint64_t cursor = 0;
+    uint32_t prevLeadingZeros = 0, prevTrailingZeros = 0,
+        leadingZeros, trailingZeros,
+        controlBits, significantBitLength;
+
+    // Allocate memory space
+    dataBuffer = malloc(sizeof(DataBuffer));
+    assert(dataBuffer != NULL);
+    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
+    assert(dataBuffer->buffer != NULL);
+    dataBuffer->length = length;
+
+    bitReader = bitReaderConstructor(values);
+
+    // Decompress each value from byte buffer and write it into data byffer.
+    while (cursor < length) {
+        // Read next value's control bits.
+        controlBits = bitReaderNextControlBits(bitReader, 2);
+
+        // Match the case corresponding to the control bits.
+        switch (controlBits)
+        {
+        case 0b0:
+            // '0' bit (i.e. prediction(previous) and current value is same)
+            value = prevValue;
+            break;
+
+        case 0b10:
+            // '10' bits (i.e. the block of current value meaningful bits falls within
+            // the scope of prediction(previous) meaningful bits)
+
+            // Read the significant bits and restore the xor value.
+            significantBitLength = BITS_OF_LONG_LONG - prevLeadingZeros - prevTrailingZeros;
+            diff = bitReaderNextLong(bitReader, significantBitLength) << prevTrailingZeros;
+            value = prevValue ^ diff;
+            prevValue = value;
+
+            // Update the number of leading and trailing zeros of xor residual.
+            prevLeadingZeros = leadingZerosCount64(diff);
+            prevTrailingZeros = trailingZerosCount64(diff);
+            break;
+
+        case 0b11:
+            // '11' bits (i.e. the block of current value meaningful bits doesn't falls within
+            // the scope of previous meaningful bits)
+            // Update the number of leading and trailing zeros.
+            //prevLeadingZeros = (uint32_t)bitReaderNextLong(bitReader, 6);
+            leadingZeros = (uint32_t)bitReaderNextLong(bitReader, 6);
+            significantBitLength = (uint32_t)bitReaderNextLong(bitReader, 6);
+            // Since we have decreased the length of significant bits by 1 for larger compression range
+            // when we compress it, we restore it's value here.
+            significantBitLength++;
+
+            // Read the significant bits and restore the xor value.
+            //prevTrailingZeros = BITS_OF_LONG_LONG - leadingZeros - significantBitLength;
+            trailingZeros = BITS_OF_LONG_LONG - leadingZeros - significantBitLength;
+            diff = bitReaderNextLong(bitReader, significantBitLength) << trailingZeros;
+            value = prevValue ^ diff;
+            prevValue = value;
+
+            // Update the number of leading and trailing zeros of xor residual.
+            prevLeadingZeros = leadingZeros;
+            prevTrailingZeros = trailingZeros;
+
+            break;
+        default:
+            break;
+        }
+        // return value;
+        // Store current value into data buffer
+        dataBuffer->buffer[cursor++] = value;
+    }
+
+    return dataBuffer;
 }

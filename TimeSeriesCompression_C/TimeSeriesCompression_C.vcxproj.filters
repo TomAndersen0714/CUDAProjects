@@ -41,9 +41,6 @@
     <ClCompile Include="src\main.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\tools\decompressors.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\tools\io_utils.c">
       <Filter>源文件</Filter>
     </ClCompile>
