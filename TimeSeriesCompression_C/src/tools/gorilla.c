@@ -5,14 +5,15 @@ static const uint32_t DELTA_MASK_7 = 0b10 << 7;
 static const uint32_t DELTA_MASK_9 = 0b110 << 9;
 static const uint32_t DELTA_MASK_12 = 0b1110 << 12;
 
-ByteBuffer* timestamp_compress_gorilla(DataBuffer* timestamps) {
+ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     // Declare variables
     ByteBuffer *compressedTimestamps;
     BitWriter* bitWriter;
     int64_t timestamp, prevTimestamp = 0;
     int32_t newDelta, deltaOfDelta, prevDelta = 0;
     uint32_t leastBitLength;
-    uint64_t cursor = 0;
+    uint64_t cursor = 0, tsCount = tsByteBuffer->length / sizeof(uint64_t),
+        *tsBuffer = (uint64_t*)tsByteBuffer->buffer;
 
     // Allocate memory space for byte buffer
     compressedTimestamps = malloc(sizeof(ByteBuffer));
@@ -25,10 +26,11 @@ ByteBuffer* timestamp_compress_gorilla(DataBuffer* timestamps) {
     bitWriter = bitWriterConstructor(compressedTimestamps);
 
     // Read each timestamp and compress it into byte byffer.
-    while (cursor < timestamps->length) {
+    //while (cursor < timestamps->length) {
+    while (cursor < tsCount) {
 
         // Calculate the delta of delta of timestamp.
-        timestamp = timestamps->buffer[cursor++];
+        timestamp = tsBuffer[cursor++];
 
         // PS: Since original implementation in gorilla paper requires that delta-of-delta
         // of timestamps can be stored by a signed 32-bit value, it doesn't support
@@ -95,15 +97,17 @@ ByteBuffer* timestamp_compress_gorilla(DataBuffer* timestamps) {
     return compressedTimestamps;
 }
 
-ByteBuffer * value_compress_gorilla(DataBuffer * values) {
+ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     // Declare variables
     ByteBuffer *compressedValues;
     BitWriter* bitWriter;
     int64_t value, prevValue = 0;
     uint32_t leadingZeros, trailingZeros, significantBits;
-    uint32_t prevLeadingZeros = UINT32_MAX;
-    uint32_t prevTrailingZeros = UINT32_MAX;
-    uint64_t diff, cursor = 0;
+    uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
+    uint32_t prevTrailingZeros = BITS_OF_LONG_LONG;
+    uint64_t diff, cursor = 0,
+        valCount = valByteBuffer->length / sizeof(uint64_t),
+        *valBuffer = (uint64_t*)valByteBuffer->buffer;
 
     // Allocate memory space
     compressedValues = malloc(sizeof(ByteBuffer));
@@ -116,10 +120,10 @@ ByteBuffer * value_compress_gorilla(DataBuffer * values) {
     bitWriter = bitWriterConstructor(compressedValues);
 
     // Read each value and compress it into byte byffer.
-    while (cursor < values->length) {
+    while (cursor < valCount) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
-        value = values->buffer[cursor++];
+        value = valBuffer[cursor++];
         diff = prevValue^value;
         prevValue = value;
 
@@ -186,26 +190,28 @@ ByteBuffer * value_compress_gorilla(DataBuffer * values) {
     return compressedValues;
 }
 
-DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length) {
+ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count) {
     // Declare variables
-    DataBuffer* dataBuffer;
+    ByteBuffer* byteBuffer;
     BitReader* bitReader;
     int64_t timestamp, prevTimestamp = 0;
     int64_t newDelta, deltaOfDelta = 0, prevDelta = 0;
-    uint64_t cursor = 0;
+    uint64_t cursor = 0, *tsBuffer;
     uint32_t controlBits;
 
     // Allocate memory space
-    dataBuffer = malloc(sizeof(DataBuffer));
-    assert(dataBuffer != NULL);
-    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
-    assert(dataBuffer->buffer != NULL);
-    dataBuffer->length = length;
+    byteBuffer = malloc(sizeof(ByteBuffer));
+    assert(byteBuffer != NULL);
+    byteBuffer->length = count * sizeof(uint64_t);
+    byteBuffer->capacity = byteBuffer->length;
+    byteBuffer->buffer = malloc(byteBuffer->length);
+    assert(byteBuffer->buffer != NULL);
 
+    tsBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(timestamps);
 
     // Decompress each timestamp from byte buffer
-    while (cursor < length) {
+    while (cursor < count) {
         controlBits = bitReaderNextControlBits(bitReader, 4);
 
         switch (controlBits)
@@ -214,7 +220,8 @@ DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length
             // '0' bit (i.e. previous and current timestamp interval(delta) is same).
             prevTimestamp = prevDelta + prevTimestamp;
             // Store current timestamp into data buffer
-            dataBuffer->buffer[cursor++] = prevTimestamp;
+            //dataBuffer->buffer[cursor++] = prevTimestamp;
+            tsBuffer[cursor++] = prevTimestamp;
             continue;
         case 0b10:
             // '10' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 7 bits).
@@ -246,7 +253,7 @@ DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length
         //prevDelta += deltaOfDelta;
         newDelta = prevDelta + deltaOfDelta;
         //prevTimestamp += prevDelta;
-        timestamp = prevTimestamp + prevDelta;
+        timestamp = prevTimestamp + newDelta;
 
         // update prevDelta and prevTimestamp
         prevDelta = newDelta;
@@ -254,33 +261,36 @@ DataBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t length
 
         // return prevTimestamp;
         // Store current timestamp into data buffer
-        dataBuffer->buffer[cursor++] = prevTimestamp;
+        //dataBuffer->buffer[cursor++] = prevTimestamp;
+        tsBuffer[cursor++] = prevTimestamp;
     }
 
-    return dataBuffer;
+    return byteBuffer;
 }
 
-DataBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t length) {
+ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
     // Declare variables
-    DataBuffer* dataBuffer;
+    ByteBuffer* byteBuffer;
     BitReader* bitReader;
     int64_t value = 0, prevValue = 0, diff;
-    uint64_t cursor = 0;
+    uint64_t cursor = 0, *valBuffer;;
     uint32_t prevLeadingZeros = 0, prevTrailingZeros = 0,
         leadingZeros, trailingZeros,
         controlBits, significantBitLength;
 
     // Allocate memory space
-    dataBuffer = malloc(sizeof(DataBuffer));
-    assert(dataBuffer != NULL);
-    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
-    assert(dataBuffer->buffer != NULL);
-    dataBuffer->length = length;
+    byteBuffer = malloc(sizeof(ByteBuffer));
+    assert(byteBuffer != NULL);
+    byteBuffer->length = count * sizeof(uint64_t);
+    byteBuffer->capacity = byteBuffer->length;
+    byteBuffer->buffer = malloc(byteBuffer->length);
+    assert(byteBuffer->buffer != NULL);
 
+    valBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
 
     // Decompress each value from byte buffer and write it into data byffer.
-    while (cursor < length) {
+    while (cursor < count) {
         // Read next value's control bits.
         controlBits = bitReaderNextControlBits(bitReader, 2);
 
@@ -335,8 +345,8 @@ DataBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t length) {
         }
         // return value;
         // Store current value into data buffer
-        dataBuffer->buffer[cursor++] = value;
+        valBuffer[cursor++] = value;
     }
 
-    return dataBuffer;
+    return byteBuffer;
 }

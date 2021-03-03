@@ -8,8 +8,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 // Define error check function.
 //#ifndef CHECK_ERROR
@@ -52,7 +52,7 @@ __host__ int64_t unixSecondTimestamp(void) {
 }
 
 // Get unix timestamp in milliseconds at current moment.
-__host__  int64_t unixMillisecondTimestamp(void) {
+__host__ int64_t unixMillisecondTimestamp(void) {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;

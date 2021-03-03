@@ -26,26 +26,26 @@ inline int64_t decodeZigZag64(const int64_t n) {
 // Leading zeros count for 32-bits number.
 inline uint8_t leadingZerosCount32(uint32_t val) {
     if (val == 0) return 32;
-    int n = 0;
+    int n = 1;
     if (val >> 16 == 0) { n += 16; val <<= 16; }
     if (val >> 24 == 0) { n += 8; val <<= 8; }
     if (val >> 28 == 0) { n += 4; val <<= 4; }
     if (val >> 30 == 0) { n += 2; val <<= 2; }
-    n += val >> 31;
+    n -= val >> 31;
     return n;
 }
 
 // Leading zeros count for 64-bits number.
 inline uint8_t leadingZerosCount64(uint64_t val) {
     if (val == 0) return 64;
-    int n = 0;
+    int n = 1;
     uint32_t x = val >> 32;
     if (x == 0) { n += 32; x = (int)val; }
     if (x >> 16 == 0) { n += 16; x <<= 16; }
     if (x >> 24 == 0) { n += 8; x <<= 8; }
     if (x >> 28 == 0) { n += 4; x <<= 4; }
     if (x >> 30 == 0) { n += 2; x <<= 2; }
-    n += x >> 31;
+    n -= x >> 31;
     return n;
 }
 

@@ -142,9 +142,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\test.h" />
+    <ClInclude Include="src\time_helper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\main.c" />
     <ClCompile Include="src\test.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

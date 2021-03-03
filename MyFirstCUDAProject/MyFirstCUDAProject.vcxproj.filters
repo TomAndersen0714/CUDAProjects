@@ -6,9 +6,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\sumArraysOnGPU-timer.cu" />
+    <ClInclude Include="src\cudaTool.cuh" />
+    <ClInclude Include="src\predefine_macros.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\cudaTool.cuh" />
+    <CudaCompile Include="src\GFC_22.cu" />
   </ItemGroup>
 </Project>

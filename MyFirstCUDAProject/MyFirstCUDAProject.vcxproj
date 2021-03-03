@@ -11,10 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\sumArraysOnGPU-timer.cu" />
+    <ClInclude Include="src\cudaTool.cuh" />
+    <ClInclude Include="src\predefine_macros.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\cudaTool.cuh" />
+    <CudaCompile Include="src\GFC_22.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0485314C-5CC5-44E5-8936-56C7E8E5594B}</ProjectGuid>
@@ -48,7 +49,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\include;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -65,7 +66,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <Include>%(Include)</Include>
+      <Include>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\include;%(Include)</Include>
       <AdditionalOptions>-Xcompiler "/wd4819" %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>

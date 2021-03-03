@@ -15,11 +15,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\test.h">
+    <ClInclude Include="src\time_helper.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\main.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="src\test.c">
       <Filter>源文件</Filter>
     </ClCompile>

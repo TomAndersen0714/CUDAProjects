@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\test.h" />
     <ClInclude Include="src\tools\bit_reader.h" />
     <ClInclude Include="src\tools\bit_writer.h" />
     <ClInclude Include="src\tools\compressors.h" />
@@ -149,6 +150,7 @@
     <ClInclude Include="src\tools\decompressors.h" />
     <ClInclude Include="src\tools\encode_utils.h" />
     <ClInclude Include="src\tools\io_utils.h" />
+    <ClInclude Include="src\tools\timer_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.c" />

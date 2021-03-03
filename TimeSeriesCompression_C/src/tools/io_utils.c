@@ -19,7 +19,9 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     cursor = 0;
     if (timestampType == _LONG_LONG && valueType == _LONG_LONG) {
         while (cursor < count &&
-            fscanf(inputFile, "%lld %lld", &timestamps[cursor], &values[cursor]) != EOF) {
+            // Format the string and convert to the values in corresponding 
+            // type, then write the bits of values into the specific address
+            fscanf(inputFile, "%llu %lld", &timestamps[cursor], &values[cursor]) != EOF) {
             cursor++;
         }
     }
@@ -32,7 +34,6 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     // Timestamp must be long long type
     // else if (timestampType == _DOUBLE_ && valueType == _LONG_LONG_)
     // else if (timestampType == _DOUBLE_ && valueType == _DOUBLE_)
-    //fclose(inputFile);
 
     // Return the uncompressed data points
     dataPoints = malloc(sizeof(DataPoints));
@@ -46,6 +47,7 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
 }
 
 void writeCompressedData(FILE *outputFile, CompressedData *compressedData) {
+
     // Write metadata as the header of compressed file
     fwrite(compressedData->metadata, sizeof(Metadata), 1, outputFile);
     // Write the compressed data into file
@@ -83,28 +85,30 @@ CompressedData *readCompressedFile(FILE *inputFile) {
 
 void writeDecompressedData(FILE *outputFile, DataPoints *decompressedData) {
     // Write the number of data points into file
-    fprintf(outputFile, "%lld", decompressedData->count);
+    fprintf(outputFile, "%lld\n", decompressedData->count);
 
     // Write the data points into file
     uint64_t cursor = 0;
     if (decompressedData->timestampType == _LONG_LONG
         && decompressedData->valueType == _LONG_LONG) {
-        while (cursor++ < decompressedData->count) {
+        while (cursor < decompressedData->count) {
             fprintf(
-                outputFile, "%lld %lld",
+                outputFile, "%lld %lld\n",
                 decompressedData->timestamps[cursor],
                 decompressedData->values[cursor]
             );
+            cursor++;
         }
     }
     else if (decompressedData->timestampType == _LONG_LONG
         && decompressedData->valueType == _DOUBLE) {
-        while (cursor++ < decompressedData->count) {
+        while (cursor < decompressedData->count) {
             fprintf(
-                outputFile, "%lld %lf",
+                outputFile, "%lld %lf\n",
                 decompressedData->timestamps[cursor],
                 decompressedData->values[cursor]
             );
+            cursor++;
         }
     }
     // Timestamp must be long long type

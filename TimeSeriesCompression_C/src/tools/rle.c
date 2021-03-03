@@ -19,19 +19,19 @@ static inline void flushZeros(BitWriter* bitWriter, int32_t* storedZeros) {
 
             // Write '0' control bit
             bitWriterWriteZeroBit(bitWriter);
-            // Write the number of cached zeros using 3 bits
+            // Write the number of cached zeros using 3 bits(i.e. '00'+3)
             bitWriterWriteBits(bitWriter, *storedZeros, 3);
             *storedZeros = 0;
         }
         else if ((*storedZeros) < 32) {
-            // Write '1' control bit
+            // Write '1' control bit(i.e. '01'+5)
             bitWriterWriteOneBit(bitWriter);
             // Write the number of cached zeros using 5 bits
             bitWriterWriteBits(bitWriter, *storedZeros, 5);
             *storedZeros = 0;
         }
         else {
-            // Write '1' control bit
+            // Write '1' control bit(i.e. '01'+5)
             bitWriterWriteOneBit(bitWriter);
             // Write 32 cached zeros
             bitWriterWriteBits(bitWriter, 0b11111, 5);
@@ -40,14 +40,15 @@ static inline void flushZeros(BitWriter* bitWriter, int32_t* storedZeros) {
     }
 }
 
-ByteBuffer * timestamp_compress_rle(DataBuffer * timestamps) {
+ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
     // Declare variables
     ByteBuffer *compressedTimestamps;
     BitWriter* bitWriter;
     int64_t timestamp, prevTimestamp = 0;
     int32_t newDelta, deltaOfDelta, prevDelta = 0;
     uint32_t leastBitLength, storedZeros = 0;
-    uint64_t cursor = 0;
+    uint64_t cursor = 0, tsCount = tsByteBuffer->length / sizeof(uint64_t),
+        *tsBuffer = (uint64_t*)tsByteBuffer->buffer;;
 
     // Allocate memory space
     compressedTimestamps = malloc(sizeof(ByteBuffer));
@@ -60,15 +61,15 @@ ByteBuffer * timestamp_compress_rle(DataBuffer * timestamps) {
     bitWriter = bitWriterConstructor(compressedTimestamps);
 
     // Write the header of current block for supporting millisecond.
-    timestamp = timestamps->buffer[cursor++];
+    timestamp = tsBuffer[cursor++];
     bitWriterWriteLong(bitWriter, timestamp);
     prevTimestamp = timestamp;
 
     // Read each timestamp and compress it into byte byffer.
-    while (cursor < timestamps->length) {
+    while (cursor < tsCount) {
 
         // Calculate the delta-of-delta of timestamps.
-        timestamp = timestamps->buffer[cursor++];
+        timestamp = tsBuffer[cursor++];
         newDelta = (int32_t)(timestamp - prevTimestamp);
         deltaOfDelta = newDelta - prevDelta;
 
@@ -91,22 +92,26 @@ ByteBuffer * timestamp_compress_rle(DataBuffer * timestamps) {
             case 1:
             case 2:
             case 3:
+                // '10'+3
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_3, 5);
                 break;
             case 4:
             case 5:
+                // '110'+5
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_5, 8);
                 break;
             case 6:
             case 7:
             case 8:
             case 9:
+                // '1110'+9
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_9, 13);
                 break;
             case 10:
             case 11:
             case 12:
             default:
+                // '1111'+32
                 bitWriterWriteBits(bitWriter, 0b1111, 4); // Write '1111' control bits.
                 // Since it only takes 4 bytes(i.e. 32 bits) to save a unix timestamp input second, we write
                 // delta-of-delta using 32 bits.
@@ -128,37 +133,39 @@ ByteBuffer * timestamp_compress_rle(DataBuffer * timestamps) {
     return compressedTimestamps;
 }
 
-DataBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t length) {
+ByteBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t count) {
     // Declare variables
-    DataBuffer* dataBuffer;
+    ByteBuffer* byteBuffer;
     BitReader* bitReader;
     int64_t timestamp, prevTimestamp = 0;
     int64_t newDelta, deltaOfDelta = 0, prevDelta = 0;
-    uint64_t cursor = 0;
+    uint64_t cursor = 0, *tsBuffer;
     uint32_t controlBits, storedZeros = 0;
 
     // Allocate memory space
-    dataBuffer = malloc(sizeof(DataBuffer));
-    assert(dataBuffer != NULL);
-    dataBuffer->buffer = malloc(length * sizeof(uint64_t));
-    assert(dataBuffer->buffer != NULL);
-    dataBuffer->length = length;
+    byteBuffer = malloc(sizeof(ByteBuffer));
+    assert(byteBuffer != NULL);
+    byteBuffer->length = count * sizeof(uint64_t);
+    byteBuffer->capacity = byteBuffer->length;
+    byteBuffer->buffer = malloc(byteBuffer->length);
+    assert(byteBuffer->buffer != NULL);
 
+    tsBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(timestamps);
 
     // Get the head of current block.
     prevTimestamp = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
-    dataBuffer->buffer[cursor++] = prevTimestamp;
+    tsBuffer[cursor++] = prevTimestamp;
 
     // Decompress each timestamp from byte buffer
-    while (cursor < length) {
+    while (cursor < count) {
         // If storedZeros != 0, previous and current timestamp interval(delta) is same,
         // just update prevTimestamp and storedZeros, and return prevTimestamp.
         if (storedZeros > 0) {
             storedZeros--;
             prevTimestamp = prevDelta + prevTimestamp;
             //return prevTimestamp;
-            dataBuffer->buffer[cursor++] = prevTimestamp;
+            tsBuffer[cursor++] = prevTimestamp;
             continue;
         }
 
@@ -185,7 +192,12 @@ DataBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t length) {
             // compress it, we need to restore it's value here.
             storedZeros++;
 
-            break;
+            // Continue decompression
+            storedZeros--;
+            prevTimestamp = prevDelta + prevTimestamp;
+            //return prevTimestamp;
+            tsBuffer[cursor++] = prevTimestamp;
+            continue;
         case 0b10:
             // '10' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 3 bits).
             deltaOfDelta = bitReaderNextLong(bitReader, 3);
@@ -215,10 +227,8 @@ DataBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t length) {
         if (deltaOfDelta >= 0) deltaOfDelta++;
 
         // Calculate the new delta and timestamp.
-        //prevDelta += deltaOfDelta;
         newDelta = prevDelta + deltaOfDelta;
-        //prevTimestamp += prevDelta;
-        timestamp = prevTimestamp + prevDelta;
+        timestamp = prevTimestamp + newDelta;
 
         // update prevDelta and prevTimestamp
         prevDelta = newDelta;
@@ -226,8 +236,8 @@ DataBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t length) {
 
         // return prevTimestamp;
         // Store current timestamp into data buffer
-        dataBuffer->buffer[cursor++] = timestamp;
+        tsBuffer[cursor++] = timestamp;
     }
 
-    return dataBuffer;
+    return byteBuffer;
 }

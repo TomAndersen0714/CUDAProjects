@@ -1,0 +1,8 @@
+00 00 00 00 5A 92 34 C0 E3 B0 40
+60 E5 80 B6 55 18 D3 48 79 90
+Timestamps: 32B -> 11B
+Timestamps compression ratio: 2.9090909
+Metric values: 32B -> 10B
+Metric values compression ratio: 3.2
+Compression ratio: 3.04761904
+Compression time: 2

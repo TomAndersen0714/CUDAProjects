@@ -36,11 +36,14 @@
     <ClInclude Include="src\tools\bit_reader.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\test.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tools\timer_utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\tools\io_utils.c">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -54,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\tools\bucket.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,7 +9,7 @@ int main(int argv, char** args) {
     printf("Using the device %d: %s\n", devNum, deviceProp.name);
     // Set the which device(GPU) to use.
     CHECK_ERROR(cudaSetDevice(devNum));
-
+    
     // Set the device of vector.
     int nElem = 1 << 24;
     printf("Vector size: %d\n", nElem);

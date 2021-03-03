@@ -11,7 +11,7 @@ typedef struct _BitWriter {
 } BitWriter;
 
 // Construct a BitWriter
-inline BitWriter* bitWriterConstructor(ByteBuffer* byteBuffer) {
+static inline BitWriter* bitWriterConstructor(ByteBuffer* byteBuffer) {
     BitWriter *bitWriter = malloc(sizeof(BitWriter));
     assert(bitWriter != NULL);
     bitWriter->byteBuffer = byteBuffer;
@@ -21,12 +21,12 @@ inline BitWriter* bitWriterConstructor(ByteBuffer* byteBuffer) {
 }
 
 // Deconstruct a BitWriter
-inline void bitWriterDeconstructor(BitWriter* bitWriter) {
+static inline void bitWriterDeconstructor(BitWriter* bitWriter) {
     free(bitWriter);
 }
 
 // If cached byte is full, then write it into buffer and get next empty byte
-inline void bitWriterFlipByte(BitWriter* bitWriter) {
+static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     // If cached byte is full
     if (bitWriter->leftBits == 0) {
         // write the cache byte into buffer
@@ -51,7 +51,7 @@ inline void bitWriterFlipByte(BitWriter* bitWriter) {
 };
 
 // Write the specific least significant bits of value into the buffer
-inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
+static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
     int64_t shift;
     while (bits > 0) {
         shift = bits - bitWriter->leftBits;
@@ -73,30 +73,30 @@ inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bi
 }
 
 // Write a 64-bits integer value into buffer
-inline void bitWriterWriteLong(BitWriter* bitWriter, uint64_t value) {
+static inline void bitWriterWriteLong(BitWriter* bitWriter, uint64_t value) {
     bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
 }
 
 // Write a double value into buffer
-inline void bitWriterWriteDouble(BitWriter* bitWriter, double value) {
+static inline void bitWriterWriteDouble(BitWriter* bitWriter, double value) {
     bitWriterWriteBits(bitWriter, *((uint64_t*)&value), BITS_OF_DOUBLE);
 }
 
 // Write a '0' bit into cache byte
-inline void bitWriterWriteZeroBit(BitWriter* bitWriter) {
+static inline void bitWriterWriteZeroBit(BitWriter* bitWriter) {
     bitWriter->leftBits--;
     bitWriterFlipByte(bitWriter);
 }
 
 // Write a '1' bit into cache byte
-inline void bitWriterWriteOneBit(BitWriter* bitWriter) {
+static inline void bitWriterWriteOneBit(BitWriter* bitWriter) {
     bitWriter->cacheByte |= (1 << (bitWriter->leftBits - 1));
     bitWriter->leftBits--;
     bitWriterFlipByte(bitWriter);
 }
 
 // Write the left bits in cached byte into the buffer.
-inline void bitWriterFlush(BitWriter* bitWriter) {
+static inline void bitWriterFlush(BitWriter* bitWriter) {
     bitWriter->leftBits = 0;
     bitWriterFlipByte(bitWriter);
 }

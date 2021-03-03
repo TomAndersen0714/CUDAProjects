@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\templateTest.h" />
+    <ClInclude Include="src\test.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\test.cc" />
+    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\test.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{02981D35-0448-4847-9D6C-60E08E7EDE9E}</ProjectGuid>
