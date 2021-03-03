@@ -160,6 +160,13 @@
     <ClCompile Include="src\tools\io_utils.c" />
     <ClCompile Include="src\tools\rle.c" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="tmp\compressedOutputDataset" />
+    <None Include="tmp\decompressedOutputDataset" />
+    <None Include="tmp\IoT1" />
+    <None Include="tmp\testDataset" />
+    <None Include="tmp\testDataset1" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

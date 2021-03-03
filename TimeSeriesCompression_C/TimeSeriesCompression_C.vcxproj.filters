@@ -63,4 +63,11 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="tmp\compressedOutputDataset" />
+    <None Include="tmp\decompressedOutputDataset" />
+    <None Include="tmp\IoT1" />
+    <None Include="tmp\testDataset" />
+    <None Include="tmp\testDataset1" />
+  </ItemGroup>
 </Project>
