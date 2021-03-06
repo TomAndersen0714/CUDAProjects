@@ -6,10 +6,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\cudaTool.cuh" />
-    <ClInclude Include="src\predefine_macros.cuh" />
+    <ClInclude Include="src\cuda_utils.cuh" />
+    <ClInclude Include="src\test.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\GFC_22.cu" />
+    <CudaCompile Include="src\test.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-#include "cudaTool.cuh"
+#include "cuda_utils.cuh"
 
 int main(int argv, char** args) {
 

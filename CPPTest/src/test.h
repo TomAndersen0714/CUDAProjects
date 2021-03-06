@@ -4,6 +4,8 @@ extern "C" {
 
     void sayHello(void);
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 }
 #endif
+
+void test();

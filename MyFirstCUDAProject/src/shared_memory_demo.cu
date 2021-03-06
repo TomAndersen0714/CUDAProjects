@@ -1,4 +1,4 @@
-#include "cudaTool.cuh"
+#include "cuda_utils.cuh"
 
 #define THREAD_SIZE 16
 //__shared__ int shared_arr[THREAD_SIZE]; // static shared memory allocation

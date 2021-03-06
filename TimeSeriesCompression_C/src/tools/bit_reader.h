@@ -8,8 +8,8 @@ typedef struct _BitReader {
 } BitReader;
 
 // Construct a BitReader
-inline BitReader* bitReaderConstructor(ByteBuffer* byteBuffer) {
-    BitReader *bitReader = malloc(sizeof(BitReader));
+static inline BitReader* bitReaderConstructor(ByteBuffer* byteBuffer) {
+    BitReader *bitReader = (BitReader*)malloc(sizeof(BitReader));
     assert(bitReader != NULL);
     bitReader->byteBuffer = byteBuffer;
     bitReader->leftBits = BITS_OF_BYTE;
@@ -19,12 +19,12 @@ inline BitReader* bitReaderConstructor(ByteBuffer* byteBuffer) {
 }
 
 // Deconstruct a BitReader
-inline void bitReaderDeconstructor(BitReader* bitReader) {
+static inline void bitReaderDeconstructor(BitReader* bitReader) {
     free(bitReader);
 }
 
 // Get a new byte from buffer, if all bits in cached byte have been read.
-inline void bitReaderFlipByte(BitReader* bitReader) {
+static inline void bitReaderFlipByte(BitReader* bitReader) {
     if (bitReader->leftBits == 0) {
         assert(bitReader->cursor < bitReader->byteBuffer->length);
         bitReader->cacheByte =
@@ -34,7 +34,7 @@ inline void bitReaderFlipByte(BitReader* bitReader) {
 }
 
 // Read the next bit and returns true if is '1' bit and false if not.
-inline bool bitReaderNextBit(BitReader* bitReader) {
+static inline bool bitReaderNextBit(BitReader* bitReader) {
     bool bit = bitReader->cacheByte >> (bitReader->leftBits - 1) & 1;
     bitReader->leftBits--;
     bitReaderFlipByte(bitReader);
@@ -42,7 +42,7 @@ inline bool bitReaderNextBit(BitReader* bitReader) {
 }
 
 // Read bit continuously, until next '0' bit is found or the number of read bits reach the value of 'maxBits'.
-inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits) {
+static inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits) {
     uint32_t controlBits = 0x00;
     bool bit;
 
@@ -61,7 +61,7 @@ inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits)
     return controlBits;
 }
 
-inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
+static inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
 
     int64_t value = 0;
     byte leastSignificantBits;

@@ -1,6 +1,0 @@
-Timestamps: 32B -> 10B
-Timestamps compression ratio: 3.2
-Metric values: 32B -> 9B
-Metric values compression ratio: 3.5555556
-Compression ratio: 3.368421
-Compression time: 0

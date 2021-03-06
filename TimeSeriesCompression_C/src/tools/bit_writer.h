@@ -12,7 +12,7 @@ typedef struct _BitWriter {
 
 // Construct a BitWriter
 static inline BitWriter* bitWriterConstructor(ByteBuffer* byteBuffer) {
-    BitWriter *bitWriter = malloc(sizeof(BitWriter));
+    BitWriter *bitWriter = (BitWriter*)malloc(sizeof(BitWriter));
     assert(bitWriter != NULL);
     bitWriter->byteBuffer = byteBuffer;
     bitWriter->leftBits = BITS_OF_BYTE;
@@ -30,13 +30,13 @@ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     // If cached byte is full
     if (bitWriter->leftBits == 0) {
         // write the cache byte into buffer
-        bitWriter->byteBuffer->buffer[bitWriter->byteBuffer->length++] 
+        bitWriter->byteBuffer->buffer[bitWriter->byteBuffer->length++]
             = bitWriter->cacheByte;
         // If the left space of buffer is run out, realloc more memory space
         if (bitWriter->byteBuffer->length == bitWriter->byteBuffer->capacity) {
             uint64_t newCap =
                 bitWriter->byteBuffer->capacity + (bitWriter->byteBuffer->capacity >> 1);
-            void* newBuffer = realloc(
+            byte* newBuffer = (byte*)realloc(
                 bitWriter->byteBuffer->buffer, newCap
             );
             // If realloc succeed

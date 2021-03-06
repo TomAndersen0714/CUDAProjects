@@ -1,4 +1,4 @@
-#include "cudaTool.cuh"
+#include "cuda_utils.cuh"
 
 #ifndef CHECK_ERROR
 #define CHECK_ERROR(call)                                                       \
@@ -64,7 +64,7 @@ int main() {
     CHECK_ERROR(cudaMemcpy(d_b, h_b, arrayByteSize, cudaMemcpyKind::cudaMemcpyHostToDevice));
 
     // Calculate sum on device by kernal function.
-    sumArraysOnDevice << <1, num >> > (d_a, d_b, d_c);
+    sumArraysOnDevice <<<1, num >> > (d_a, d_b, d_c);
 
     // Let host wait for device finish.
     CHECK_ERROR(cudaDeviceSynchronize());

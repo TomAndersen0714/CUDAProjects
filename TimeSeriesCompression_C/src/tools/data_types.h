@@ -14,10 +14,8 @@
 #define BITS_OF_FLOAT 32
 #define BITS_OF_LONG_LONG 64
 #define BITS_OF_DOUBLE 64
-#define LINE_MAX_LENGTH 256
 #define DEFAULT_BUFFER_SIZE 1024
 #define DEFAULT_FRAME_SIZE 8
-#define ZOOM_FACTOR 1.5
 
 typedef unsigned char byte;
 

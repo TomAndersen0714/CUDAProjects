@@ -11,11 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\cudaTool.cuh" />
-    <ClInclude Include="src\predefine_macros.cuh" />
+    <ClInclude Include="src\cuda_utils.cuh" />
+    <ClInclude Include="src\test.h">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <CudaCompile Include="src\test.cu">
+      <FileType>CppHeader</FileType>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\GFC_22.cu" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0485314C-5CC5-44E5-8936-56C7E8E5594B}</ProjectGuid>

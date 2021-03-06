@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdbool.h>
 #include <direct.h>
+
 #include "time_helper.h"
+#include "test.h"
 
 #ifndef __TEST_C__
 #define __TEST_C__
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]) {
     int32_t int32_t_1 = 12;
     uint32_t uint32_t_1 = (uint32_t)int32_t_1;
     printf("%ld %lu\n", int32_t_1, uint32_t_1);
-    // 测试结果显示,当未超过int32_t类型的范围时,int32_t 和 uint32_t 之间能够直接进行转换
+    // 小结:结果显示,当未超过int32_t类型的范围时,int32_t 和 uint32_t 之间能够直接进行转换
 
     puts(separator);
 
@@ -235,8 +237,16 @@ int main(int argc, char* argv[]) {
     //free(chars);
     // 小结: 会抛出异常 _CrtlsValidHeapPointer(block)
 
-    printf("%llu\n", 1ULL);
+    // 测试 long long 和 long long int 的长度
+    printf("%llu\t%llu\n", sizeof(long long), sizeof(long long int));
+    // 小结: long long 和 long long int 类型的长度是相同的
 
+    // 测试将 int 类型数值 按照 long long int 进行输出
+    argc = 15;
+    //printf("%d\t%lld\n", argc, argc);
+    // 小结: 因为读取的字长和原始类型不同,这样的读取方式会导致读取越界,禁止此类错误
 
+    // 测试 extern inline 关键字组合的使用
+    test();
     return 0;
 }

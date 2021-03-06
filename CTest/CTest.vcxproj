@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\test.h" />
     <ClInclude Include="src\time_helper.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "test.h"
+
 typedef struct _IEEE_FLOAT {
     unsigned int nMantissa : 23;  //尾数部分
     unsigned int nExponent : 8;  //指数部分
@@ -57,6 +59,6 @@ int main(int argc, char* argv[]) {
     sayHello();
     // 小结:C++中函数默认是extern的,综合main.c中的结果可得,C/C++中函数声明默认为 extern的
 
-    
+    test();
     return 0;
 }
