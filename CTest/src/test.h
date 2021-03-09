@@ -1,7 +1,8 @@
 #ifndef _TEST_H_
 #define _TEST_H_
 
-// 测试 extern inline 关键字组合的使用
+// 娴嬭瘯 extern inline 鍏抽敭瀛楃粍鍚堢殑浣跨敤
 extern inline void test();
+
 
 #endif // _TEST_H_

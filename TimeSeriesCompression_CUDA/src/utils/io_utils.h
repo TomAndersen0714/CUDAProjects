@@ -2,7 +2,6 @@
 #define _IO_UTILS_H_
 
 #include "data_types.h"
-#include "encode_utils.h"
 
 // Read and parse the uncompressed file in text format.
 DataPoints* readUncompressedFile(

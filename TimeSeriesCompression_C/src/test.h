@@ -7,9 +7,10 @@
 #include "tools/timer_utils.h"
 
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ io_utils.h
+// æµ‹è¯• io_utils.h
 //////////////////////////////////////////////////////////////////////////
-static void test_io_utils() {
+static void test_io_utils()
+{
 
     // Declare variables
     //char *base_dir = "C:/Users/DELL/Desktop/TSDataset/with timestamps/with abnormal timestamp/ATimeSeriesDataset-master/tmp/";
@@ -17,21 +18,20 @@ static void test_io_utils() {
     char *dataset = "testDataset";
     char *inputFilePath, *outputFilePath;
     FILE *inputFile, *outputFile;
-    ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    //ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG; // æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    //ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
-    inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ readUncompressedFile
+    // æµ‹è¯• readUncompressedFile
 
     inputFile = fopen(inputFilePath, "r");
     assert(inputFile != NULL);
-    DataPoints* dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+    DataPoints *dataPoints = readUncompressedFile(
+        inputFile, timestampType, valueType);
     // Print the datapoints info
     printDatapoints(dataPoints);
 
@@ -39,9 +39,8 @@ static void test_io_utils() {
     free(inputFilePath);
     //////////////////////////////////////////////////////////////////////////
 
-
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ writeDecompressedData
+    // æµ‹è¯• writeDecompressedData
 
     outputFilePath = "tmp/decompressedOutputDataset";
     outputFile = fopen(outputFilePath, "w");
@@ -53,18 +52,18 @@ static void test_io_utils() {
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ writeCompressedData
+    // æµ‹è¯• writeCompressedData
 
     // Construct a 'CompressedData'
-    CompressedData* compressedData = (CompressedData*)malloc(sizeof(CompressedData));
-    compressedData->metadata = (Metadata*)malloc(sizeof(Metadata));
-    compressedData->timestamps = (byte*)malloc(sizeof(byte) * 16);
-    compressedData->values = (byte*)malloc(sizeof(byte) * 16);
-    *(uint64_t*)(compressedData->timestamps) = 1519531200000;
-    *((uint64_t*)(compressedData->timestamps) + 1) = 1519531260000;
-    *(uint64_t*)(compressedData->values) = 96; // ²âÊÔÕûÐÍÇé¿ö
-    *((uint64_t*)(compressedData->values) + 1) = 134;
-    //*(double*)(compressedData->values) = 96.0; // ²âÊÔ¸¡µãÊýÇé¿ö
+    CompressedData *compressedData = (CompressedData *)malloc(sizeof(CompressedData));
+    compressedData->metadata = (Metadata *)malloc(sizeof(Metadata));
+    compressedData->timestamps = (byte *)malloc(sizeof(byte) * 16);
+    compressedData->values = (byte *)malloc(sizeof(byte) * 16);
+    *(uint64_t *)(compressedData->timestamps) = 1519531200000;
+    *((uint64_t *)(compressedData->timestamps) + 1) = 1519531260000;
+    *(uint64_t *)(compressedData->values) = 96; // æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    *((uint64_t *)(compressedData->values) + 1) = 134;
+    //*(double*)(compressedData->values) = 96.0; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
     //*((double*)(compressedData->values) + 1) = 134.0;
 
     // Construct a 'Metadata'
@@ -88,7 +87,7 @@ static void test_io_utils() {
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ readCompressedFile
+    // æµ‹è¯• readCompressedFile
     inputFilePath = "tmp/compressedOutputDataset";
     inputFile = fopen(inputFilePath, "r");
     assert(inputFile != NULL);
@@ -99,29 +98,28 @@ static void test_io_utils() {
     fclose(inputFile);
     freeCompressedData(compressedData);
     //////////////////////////////////////////////////////////////////////////
-
 }
 
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ compressors.h: timestamp_compress_gorilla
-// ²âÊÔ decompressors.h: timestamp_decompress_gorilla
-// ²âÊÔ compressors.h: value_compress_gorilla
-// ²âÊÔ compressors.h: value_decompress_gorilla
+// æµ‹è¯• compressors.h: timestamp_compress_gorilla
+// æµ‹è¯• decompressors.h: timestamp_decompress_gorilla
+// æµ‹è¯• compressors.h: value_compress_gorilla
+// æµ‹è¯• compressors.h: value_decompress_gorilla
 //////////////////////////////////////////////////////////////////////////
-static void test_gorilla() {
+static void test_gorilla()
+{
     // Declare variables
     char *base_dir = "tmp/";
-    char *dataset = "testDataset1";
+    char *dataset = "testDataset2";
     char *inputFilePath;
     FILE *inputFile;
-    DataPoints* dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
-
+    DataPoints *dataPoints;
+    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: timestamp_compress_gorilla
-    inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
+    // æµ‹è¯• compressors.h: timestamp_compress_gorilla
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
 
@@ -130,41 +128,39 @@ static void test_gorilla() {
 
     // Read the uncompressed data
     dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+        inputFile, timestampType, valueType);
 
     // Print uncompressed data points
     printDatapoints(dataPoints);
 
     // Construct the buffer for uncompressed timestamps
-    ByteBuffer* tsByteBuffer = malloc(sizeof(ByteBuffer));
-    tsByteBuffer->buffer = (byte*)dataPoints->timestamps;
+    ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    tsByteBuffer->buffer = (byte *)dataPoints->timestamps;
     tsByteBuffer->length = dataPoints->count * sizeof(uint64_t);
     tsByteBuffer->capacity = tsByteBuffer->length;
 
     // Compress the timestamps of data points
-    ByteBuffer* compressedTimestamps =
+    ByteBuffer *compressedTimestamps =
         timestamp_compress_gorilla(tsByteBuffer);
 
     printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ decompressors.h: timestamp_decompress_gorilla
+    // æµ‹è¯• decompressors.h: timestamp_decompress_gorilla
 
-    ByteBuffer* decompressedTimestamps = timestamp_decompress_gorilla(
+    ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
         compressedTimestamps,
-        dataPoints->count
-    );
+        dataPoints->count);
     printDecompressedData(decompressedTimestamps, timestampType);
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_compress_gorilla
+    // æµ‹è¯• compressors.h: value_compress_gorilla
 
     // Construct the buffer for uncompressed values
-    ByteBuffer *valBuffer = malloc(sizeof(ByteBuffer));
-    valBuffer->buffer = (byte*)dataPoints->values;
+    ByteBuffer *valBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    valBuffer->buffer = (byte *)dataPoints->values;
     valBuffer->length = dataPoints->count * sizeof(uint64_t);
     valBuffer->capacity = valBuffer->length;
 
@@ -174,13 +170,11 @@ static void test_gorilla() {
     printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
-
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_decompress_gorilla
+    // æµ‹è¯• compressors.h: value_decompress_gorilla
 
     ByteBuffer *decompressedValues = value_decompress_gorilla(
-        compressedValues, dataPoints->count
-    );
+        compressedValues, dataPoints->count);
     printDecompressedData(decompressedValues, valueType);
     //////////////////////////////////////////////////////////////////////////
 
@@ -194,22 +188,22 @@ static void test_gorilla() {
     freeDataPoints(dataPoints);
 }
 
-
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ compressors.h: timestamp_compress_rle
-// ²âÊÔ decompressors.h: timestamp_decompress_rle
+// æµ‹è¯• compressors.h: timestamp_compress_rle
+// æµ‹è¯• decompressors.h: timestamp_decompress_rle
 //////////////////////////////////////////////////////////////////////////
-static void test_rle() {
+static void test_rle()
+{
     // Declare variables
     char *base_dir = "tmp/";
     char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
-    DataPoints* dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    DataPoints *dataPoints;
+    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
-    inputFilePath = malloc(strlen(base_dir) + strlen(dataset) + 1);
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     assert(inputFilePath != NULL);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
@@ -219,39 +213,36 @@ static void test_rle() {
     assert(inputFile != NULL);
 
     dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+        inputFile, timestampType, valueType);
 
     // Print the uncompressed data points
     printDatapoints(dataPoints);
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ: timestamp_compress_rle
-
+    // æµ‹è¯•: timestamp_compress_rle
 
     // Construct the buffer for uncompressed timestamps
-    ByteBuffer* tsByteBuffer = malloc(sizeof(ByteBuffer));
+    ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
     assert(tsByteBuffer != NULL);
-    tsByteBuffer->buffer = (byte*)dataPoints->timestamps;
+    tsByteBuffer->buffer = (byte *)dataPoints->timestamps;
     tsByteBuffer->length = dataPoints->count * sizeof(uint64_t);
     tsByteBuffer->capacity = tsByteBuffer->length;
     assert(tsByteBuffer->buffer != NULL);
 
     // Compress the timestamps of data points
-    ByteBuffer* compressedTimestamps =
+    ByteBuffer *compressedTimestamps =
         timestamp_compress_rle(tsByteBuffer);
 
     printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ: timestamp_decompress_rle
-    ByteBuffer* decompressedTimestamps =
+    // æµ‹è¯•: timestamp_decompress_rle
+    ByteBuffer *decompressedTimestamps =
         timestamp_decompress_rle(compressedTimestamps, dataPoints->count);
 
     printDecompressedData(decompressedTimestamps, timestampType);
     //////////////////////////////////////////////////////////////////////////
-
 
     // Free the allocated resources
     fclose(inputFile);
@@ -261,26 +252,26 @@ static void test_rle() {
     freeDataPoints(dataPoints);
 }
 
-
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ compressors.h: value_compress_bitpack
-// ²âÊÔ decompressors.h: value_decompress_bitpack
+// æµ‹è¯• compressors.h: value_compress_bitpack
+// æµ‹è¯• decompressors.h: value_decompress_bitpack
 //////////////////////////////////////////////////////////////////////////
-static void test_bitpack() {
+static void test_bitpack()
+{
     // Declare variables
     char *base_dir = "tmp/";
     char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
     DataPoints *datapoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_compress_bitpack
+    // æµ‹è¯• compressors.h: value_compress_bitpack
 
     // Read the uncompressed data
-    inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     assert(inputFilePath != NULL);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
@@ -289,30 +280,27 @@ static void test_bitpack() {
     assert(inputFile != NULL);
 
     datapoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+        inputFile, timestampType, valueType);
     // Print uncompressed data points
     printDatapoints(datapoints);
 
     // Construct the buffer for uncompreessed values
-    ByteBuffer* uncompressedValues = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    ByteBuffer *uncompressedValues = (ByteBuffer *)malloc(sizeof(ByteBuffer));
     assert(uncompressedValues != NULL);
     uncompressedValues->length = datapoints->count * sizeof(uint64_t);
     uncompressedValues->capacity = uncompressedValues->length;
-    uncompressedValues->buffer = (byte*)datapoints->values;
+    uncompressedValues->buffer = (byte *)datapoints->values;
 
     // Compress the values of data points
-    ByteBuffer* compressedValues = value_compress_bitpack(uncompressedValues);
+    ByteBuffer *compressedValues = value_compress_bitpack(uncompressedValues);
 
     printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
-
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ decompressors.h: value_decompress_bitpack
-    ByteBuffer* decompressedValues = value_decompress_bitpack(
-        compressedValues, datapoints->count
-    );
+    // æµ‹è¯• decompressors.h: value_decompress_bitpack
+    ByteBuffer *decompressedValues = value_decompress_bitpack(
+        compressedValues, datapoints->count);
     printDecompressedData(decompressedValues, valueType);
     //////////////////////////////////////////////////////////////////////////
 
@@ -325,24 +313,25 @@ static void test_bitpack() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ compressors.h: value_compress_bucket
-// ²âÊÔ decompressors.h: value_decompress_bucket
+// æµ‹è¯• compressors.h: value_compress_bucket
+// æµ‹è¯• decompressors.h: value_decompress_bucket
 //////////////////////////////////////////////////////////////////////////
-static void test_bucket() {
+static void test_bucket()
+{
     // Declare variables
-    char* base_dir = "tmp/";
-    char* dataset = "testDataset";
-    char* inputFilePath;
-    FILE* inputFile;
-    DataPoints* datapoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    char *base_dir = "tmp/";
+    char *dataset = "testDataset";
+    char *inputFilePath;
+    FILE *inputFile;
+    DataPoints *datapoints;
+    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_compress_bucket
+    // æµ‹è¯• compressors.h: value_compress_bucket
 
     // Read compressed data
-    inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     assert(inputFilePath != NULL);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
@@ -351,29 +340,26 @@ static void test_bucket() {
     assert(inputFile != NULL);
 
     datapoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+        inputFile, timestampType, valueType);
     // Print uncompressed datapoints
     printDatapoints(datapoints);
 
     // Construct buffer for uncompressed values
-    ByteBuffer* uncompressedValues = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    ByteBuffer *uncompressedValues = (ByteBuffer *)malloc(sizeof(ByteBuffer));
     assert(uncompressedValues != NULL);
     uncompressedValues->length = datapoints->count * sizeof(uint64_t);
     uncompressedValues->capacity = uncompressedValues->length;
-    uncompressedValues->buffer = (byte*)datapoints->values;
+    uncompressedValues->buffer = (byte *)datapoints->values;
 
     // Compress values of data points
-    ByteBuffer* compressedValues = value_compress_bucket(uncompressedValues);
+    ByteBuffer *compressedValues = value_compress_bucket(uncompressedValues);
     printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
-
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ decompressors.h: value_decompress_bucket
-    ByteBuffer* decompressedValues = value_decompress_bucket(
-        compressedValues, datapoints->count
-    );
+    // æµ‹è¯• decompressors.h: value_decompress_bucket
+    ByteBuffer *decompressedValues = value_decompress_bucket(
+        compressedValues, datapoints->count);
     printDecompressedData(decompressedValues, valueType);
     //////////////////////////////////////////////////////////////////////////
 
@@ -386,21 +372,22 @@ static void test_bucket() {
 }
 
 //////////////////////////////////////////////////////////////////////////
-// ²âÊÔ data_types.h: printStat
+// æµ‹è¯• data_types.h: printStat
 //////////////////////////////////////////////////////////////////////////
-static void test_statistic() {
+static void test_statistic()
+{
     // Declare variables
     char *base_dir = "tmp/";
     char *dataset = "IoT1";
     char *inputFilePath;
     FILE *inputFile;
-    DataPoints* dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    DataPoints *dataPoints;
+    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
     uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
 
     // Read the uncompressed data
-    inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
+    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);
 
@@ -408,36 +395,35 @@ static void test_statistic() {
     assert(inputFile != NULL);
 
     dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );
+        inputFile, timestampType, valueType);
 
     // Print uncompressed data points
     //printDatapoints(dataPoints);
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: timestamp_compress_gorilla
+    // æµ‹è¯• compressors.h: timestamp_compress_gorilla
 
     timer = unixMillisecondTimestamp();
 
     // Construct the buffer for uncompressed timestamps
-    ByteBuffer* tsByteBuffer = malloc(sizeof(ByteBuffer));
-    tsByteBuffer->buffer = (byte*)dataPoints->timestamps;
+    ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    tsByteBuffer->buffer = (byte *)dataPoints->timestamps;
     tsByteBuffer->length = dataPoints->count * sizeof(uint64_t);
     tsByteBuffer->capacity = tsByteBuffer->length;
 
     // Compress the timestamps of data points
-    ByteBuffer* compressedTimestamps =
+    ByteBuffer *compressedTimestamps =
         timestamp_compress_gorilla(tsByteBuffer);
 
     //printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
-
+    compressionTimeMillis = unixMillisecondTimestamp() - timer;
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_compress_gorilla
+    // æµ‹è¯• compressors.h: value_compress_gorilla
 
     // Construct the buffer for uncompressed values
-    ByteBuffer *valBuffer = malloc(sizeof(ByteBuffer));
-    valBuffer->buffer = (byte*)dataPoints->values;
+    ByteBuffer *valBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    valBuffer->buffer = (byte *)dataPoints->values;
     valBuffer->length = dataPoints->count * sizeof(uint64_t);
     valBuffer->capacity = valBuffer->length;
 
@@ -447,42 +433,38 @@ static void test_statistic() {
     //printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
-    compressionTimeMillis = unixMillisecondTimestamp() - timer;
+    //compressionTimeMillis = unixMillisecondTimestamp() - timer;
     timer = unixMillisecondTimestamp();
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ decompressors.h: timestamp_decompress_gorilla
+    // æµ‹è¯• decompressors.h: timestamp_decompress_gorilla
 
-    ByteBuffer* decompressedTimestamps = timestamp_decompress_gorilla(
+    ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
         compressedTimestamps,
-        dataPoints->count
-    );
+        dataPoints->count);
     //printDecompressedData(decompressedTimestamps, timestampType);
     //////////////////////////////////////////////////////////////////////////
-
+    decompressionTimeMillis = unixMillisecondTimestamp() - timer;
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ compressors.h: value_decompress_gorilla
-
+    // æµ‹è¯• compressors.h: value_decompress_gorilla
+    
     ByteBuffer *decompressedValues = value_decompress_gorilla(
-        compressedValues, dataPoints->count
-    );
+        compressedValues, dataPoints->count);
     //printDecompressedData(decompressedValues, valueType);
     //////////////////////////////////////////////////////////////////////////
 
-    decompressionTimeMillis = unixMillisecondTimestamp() - timer;
+    //decompressionTimeMillis = unixMillisecondTimestamp() - timer;
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ data_types.h: printStat
+    // æµ‹è¯• data_types.h: printStat
     printStat(
         dataPoints,
         compressedTimestamps,
         compressedValues,
         compressionTimeMillis,
-        decompressionTimeMillis
-    );
+        decompressionTimeMillis);
 
     //////////////////////////////////////////////////////////////////////////
-
 
     // Free the allocated memory
     fclose(inputFile);

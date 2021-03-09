@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "test.h"
 
-// static extern void sayHello(void) // error: extern ºÍ static ÎŞ·¨Í¬Ê±Ê¹ÓÃ
+// static extern void sayHello(void) // error: extern å’Œ static æ— æ³•åŒæ—¶ä½¿ç”¨
 void sayHello(void) {
     printf("Hello World!\n");
 }

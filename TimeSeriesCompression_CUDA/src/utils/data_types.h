@@ -9,9 +9,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-
 #define BITS_OF_BYTE 8
 #define BITS_OF_INT 32
 #define BITS_OF_FLOAT 32
@@ -123,9 +120,31 @@ static inline void freeCompressedData(CompressedData* const compressedData) {
     free(compressedData);
 }
 
+/*
 static inline void printCompressedData(ByteBuffer* byteBuffer) {
     for (int i = 0; i < byteBuffer->length; i++) {
         printf("%02X ", byteBuffer->buffer[i]);
+    }
+    puts(""); // print new line
+}*/
+
+static inline void printCompressedData(
+    byte* compressedData,
+    uint32_t* offs, // offsets of each frame
+    uint32_t* length,// length of compressed data for each thread
+    uint32_t threads // the total number of threads
+) {
+    // Restrict data to print
+    if (threads > 4) threads = 4;
+    int start, end; // start and end offset of compressed bytes
+    for (int i = 0; i < threads; i++) {
+        start = offs[i] * BYTES_OF_LONG_LONG;
+        end = start + length[i];
+        assert(end < offs[i + 1] * BYTES_OF_LONG_LONG);
+        for (int j = start; j < end; j++) {
+            printf("%02X ", compressedData[j]);
+        }
+        puts(""); // print new line
     }
     puts(""); // print new line
 }
@@ -148,6 +167,10 @@ static inline void printDecompressedData(ByteBuffer* byteBuffer, ValueType dataT
 }
 
 static inline void printDatapoints(const DataPoints* const dataPoints) {
+    // restrict the number of datapoint to print
+    int count = dataPoints->count;
+    if (count > 32) count = 32;
+
     // Print the datapoints info
     printf(
         "TimestampType: %d, ValueType: %d, Count: %llu \n",
@@ -161,7 +184,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
     if (dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _LONG_LONG
         ) {
-        for (int i = 0; i < dataPoints->count; i++) {
+        for (int i = 0; i < count; i++) {
             printf(
                 "%llu\t%llu\n",
                 dataPoints->timestamps[i],
@@ -173,7 +196,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
         dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _DOUBLE
         ) {
-        for (int i = 0; i < dataPoints->count; i++) {
+        for (int i = 0; i < count; i++) {
             printf(
                 "%llu\t%lf\n",
                 dataPoints->timestamps[i],

@@ -1,4 +1,3 @@
-#include "utils/cuda_common_utils.h"
 #include "test.h"
 
 int main(int argc, char* argv[]) {

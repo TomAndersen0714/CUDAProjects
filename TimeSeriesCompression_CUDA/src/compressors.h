@@ -2,9 +2,7 @@
 #define _COMPRESSOR_H_
 
 #include "utils/data_types.h"
-#include "utils/encode_utils.h"
-#include "utils/cuda_common_utils.h"
-#include "utils/bit_writer.h"
+
 
 // Compress timestamps on GPU using Gorilla
 void timestamp_compress_gorilla_gpu(

@@ -78,13 +78,16 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\utils\io_utils.c" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\utils\io_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\test.cpp">
+      <FileType>CppHeader</FileType>
+    </ClCompile>
     <ClInclude Include="src\test.h" />
-    <ClInclude Include="src\utils\bit_reader.h" />
-    <ClInclude Include="src\utils\bit_writer.h" />
+    <ClInclude Include="src\utils\bit_reader.cuh" />
+    <ClInclude Include="src\utils\bit_writer.cuh" />
     <ClInclude Include="src\utils\cuda_common_utils.h" />
     <ClInclude Include="src\compressors.h" />
     <ClInclude Include="src\decompressors.h" />

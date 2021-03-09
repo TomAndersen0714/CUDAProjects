@@ -11,8 +11,8 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
         //fclose(inputFile);
         exit(EXIT_FAILURE);
     };
-    timestamps = malloc(sizeof(uint64_t)*count);
-    values = malloc(sizeof(uint64_t)*count);
+    timestamps = (uint64_t *)malloc(sizeof(uint64_t)*count);
+    values = (uint64_t *)malloc(sizeof(uint64_t)*count);
     assert(timestamps != NULL && values != NULL);
 
     // Parse every line of file
@@ -36,7 +36,7 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     // else if (timestampType == _DOUBLE_ && valueType == _DOUBLE_)
 
     // Return the uncompressed data points
-    dataPoints = malloc(sizeof(DataPoints));
+    dataPoints = (DataPoints*)malloc(sizeof(DataPoints));
     assert(dataPoints != NULL);
     dataPoints->count = count;
     dataPoints->timestamps = timestamps;
@@ -64,18 +64,18 @@ CompressedData *readCompressedFile(FILE *inputFile) {
     CompressedData* compressedData;
 
     // Get the metadata of compressed data
-    metadata = malloc(sizeof(Metadata));
+    metadata = (Metadata *)malloc(sizeof(Metadata));
     assert(metadata != NULL);
     fread(metadata, sizeof(Metadata), 1, inputFile);
     // Get the compressed data
-    timestamps = malloc(sizeof(byte)*metadata->tsLength);
-    values = malloc(sizeof(byte)*metadata->valLength);
+    timestamps = (byte *)malloc(sizeof(byte)*metadata->tsLength);
+    values = (byte *)malloc(sizeof(byte)*metadata->valLength);
     assert(timestamps != NULL && values != NULL);
     fread(timestamps, sizeof(byte)*metadata->tsLength, 1, inputFile);
     fread(values, sizeof(byte)*metadata->valLength, 1, inputFile);
 
     // Return the compressed data points and metadata
-    compressedData = malloc(sizeof(CompressedData));
+    compressedData = (CompressedData*)malloc(sizeof(CompressedData));
     assert(compressedData != NULL);
     compressedData->metadata = metadata;
     compressedData->timestamps = timestamps;

@@ -1,7 +1,8 @@
 #ifndef _TIMER_UTILS_H_
 #define _TIMER_UTILS_H_
 
-#include "data_types.h"
+#include <time.h>
+#include <stdint.h>
 
 // Get unix timestamp in seconds at current moment.
 static inline uint64_t unixSecondTimestamp(void) {

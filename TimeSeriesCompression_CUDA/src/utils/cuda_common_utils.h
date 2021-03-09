@@ -11,17 +11,18 @@
 
 
 // Define error check function.
-static inline void checkCudaError(const cudaError_t error) {
+#define checkCudaError(error) check((error), __FILE__, __LINE__)
 
+void check(const cudaError_t error, const char *const file, int const line) {
     if (error != cudaSuccess) {
-        printf("Error: %s:%d,  ", __FILE__, __LINE__);
+        printf("Error: %s:%d,  ", file, line);
         printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));
         exit(EXIT_FAILURE);
     }
 }
 
 // Warming up for GPU
-__global__ static inline void warmingUp() {
+__global__ static void warmingUp() {
 
 }
 #endif // _CUDA_COMMON_UTILS_H_

@@ -6,27 +6,27 @@
 
 int main(int argc, char* argv[]) {
 
-    // ²âÊÔ io_utils.h
+    // æµ‹è¯• io_utils.h
     //test_io_utils();
 
-    // ²âÊÔ Gorilla Ëã·¨
+    // æµ‹è¯• Gorilla ç®—æ³•
     //test_gorilla();
-
-    // ²âÊÔ RLE Ëã·¨
+    
+    // æµ‹è¯• RLE ç®—æ³•
     //test_rle();
 
-    // ²âÊÔ BitPack Ëã·¨
+    // æµ‹è¯• BitPack ç®—æ³•
     //test_bitpack();
 
-    // ²âÊÔ Bucket Ëã·¨
+    // æµ‹è¯• Bucket ç®—æ³•
     //test_bucket();
 
 
-    // ²âÊÔ timer_utils.h
+    // æµ‹è¯• timer_utils.h
     /*printf("%llu\n", unixMillisecondTimestamp());
     printf("%llu\n", unixSecondTimestamp());*/
 
-    // ²âÊÔÍ³¼ÆĞÅÏ¢´òÓ¡
+    // æµ‹è¯• data_types.h: printStat
     test_statistic();
 
     return 0;

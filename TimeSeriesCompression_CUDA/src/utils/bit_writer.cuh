@@ -1,6 +1,9 @@
 #ifndef _BIT_READER_H_
 #define _BIT_READER_H_
 
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 #include "data_types.h"
 
 typedef struct _BitWriter {
@@ -30,7 +33,7 @@ static inline void bitWriterDeconstructor(BitWriter* bitWriter) {
 */
 
 // If cached byte is full, then write it into buffer and get next empty byte
-static inline void bitWriterFlipByte(BitWriter* bitWriter) {
+__device__ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     // If cached byte is full
     if (bitWriter->leftBits == 0) {
         // write the cache byte into buffer
@@ -59,7 +62,7 @@ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
 };
 
 // Write the specific least significant bits of value into the buffer
-static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
+__device__ static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
     int64_t shift;
     while (bits > 0) {
         shift = bits - bitWriter->leftBits;
@@ -82,32 +85,32 @@ static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint
 
 
 // Write a 64-bits integer value into buffer
-static inline void bitWriterWriteLong(BitWriter* bitWriter, uint64_t value) {
+__device__ static inline void bitWriterWriteLong(BitWriter* bitWriter, uint64_t value) {
     bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
 }
 
 
 // Write a double value into buffer
-static inline void bitWriterWriteDouble(BitWriter* bitWriter, double value) {
+__device__ static inline void bitWriterWriteDouble(BitWriter* bitWriter, double value) {
     bitWriterWriteBits(bitWriter, *((uint64_t*)&value), BITS_OF_DOUBLE);
 }
 
 
 // Write a '0' bit into cache byte
-static inline void bitWriterWriteZeroBit(BitWriter* bitWriter) {
+__device__ static inline void bitWriterWriteZeroBit(BitWriter* bitWriter) {
     bitWriter->leftBits--;
     bitWriterFlipByte(bitWriter);
 }
 
 // Write a '1' bit into cache byte
-static inline void bitWriterWriteOneBit(BitWriter* bitWriter) {
+__device__ static inline void bitWriterWriteOneBit(BitWriter* bitWriter) {
     bitWriter->cacheByte |= (1 << (bitWriter->leftBits - 1));
     bitWriter->leftBits--;
     bitWriterFlipByte(bitWriter);
 }
 
 // Write the left bits in cached byte into the buffer.
-static inline void bitWriterFlush(BitWriter* bitWriter) {
+__device__ static inline void bitWriterFlush(BitWriter* bitWriter) {
     bitWriter->leftBits = 0;
     bitWriterFlipByte(bitWriter);
 }
