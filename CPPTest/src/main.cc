@@ -5,9 +5,9 @@
 #include "test.h"
 
 typedef struct _IEEE_FLOAT {
-    unsigned int nMantissa : 23;  //Î²Êı²¿·Ö
-    unsigned int nExponent : 8;  //Ö¸Êı²¿·Ö
-    unsigned int nSign : 1;  //·ûºÅÎ»
+    unsigned int nMantissa : 23;  //å°¾æ•°éƒ¨åˆ†
+    unsigned int nExponent : 8;  //æŒ‡æ•°éƒ¨åˆ†
+    unsigned int nSign : 1;  //ç¬¦å·ä½
 } IEEE_FLOAT;
 
 int main(int argc, char* argv[]) {
@@ -48,16 +48,16 @@ int main(int argc, char* argv[]) {
         a_vector.push_back(i);
     }
     std::cout << a_vector.capacity() << '\t' << a_vector.size() << '\t' << std::endl;
-    // C++ÖĞÖ§³ÖÒıÓÃÀàĞÍ(Reference),¶øCÓïÑÔÖĞ²¢²»Ö§³ÖÒıÓÃÀàĞÍ
-    // PS: ÒıÓÃÀàĞÍÉùÃ÷Ê±ÀàËÆÓÚ *const Ö¸Õë,Ê¹ÓÃÊ±ÀàËÆÓÚÖ¸Õë½âÒıÓÃ *ptr
+    // C++ä¸­æ”¯æŒå¼•ç”¨ç±»å‹(Reference),è€ŒCè¯­è¨€ä¸­å¹¶ä¸æ”¯æŒå¼•ç”¨ç±»å‹
+    // PS: å¼•ç”¨ç±»å‹å£°æ˜æ—¶ç±»ä¼¼äº *const æŒ‡é’ˆ,ä½¿ç”¨æ—¶ç±»ä¼¼äºæŒ‡é’ˆè§£å¼•ç”¨ *ptr
     int a1 = 10;
     int &a2 = a1;
 
 
-    // ²âÊÔC++ÖĞº¯ÊıÊÇ·ñÄ¬ÈÏÊÇ extern µÄ
+    // æµ‹è¯•C++ä¸­å‡½æ•°æ˜¯å¦é»˜è®¤æ˜¯ extern çš„
     void sayHello(void);
     sayHello();
-    // Ğ¡½á:C++ÖĞº¯ÊıÄ¬ÈÏÊÇexternµÄ,×ÛºÏmain.cÖĞµÄ½á¹û¿ÉµÃ,C/C++ÖĞº¯ÊıÉùÃ÷Ä¬ÈÏÎª externµÄ
+    // å°ç»“:C++ä¸­å‡½æ•°é»˜è®¤æ˜¯externçš„,ç»¼åˆmain.cä¸­çš„ç»“æœå¯å¾—,C/C++ä¸­å‡½æ•°å£°æ˜é»˜è®¤ä¸º externçš„
 
     test();
     return 0;
