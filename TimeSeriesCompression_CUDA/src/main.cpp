@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[]) {
 
-    // ²âÊÔ timestamp_compress_gorilla_gpu
+    // æµ‹è¯• timestamp_compress_gorilla_gpu
     test_timestamp_compress_gorilla_gpu();
 
     return 0;

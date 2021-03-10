@@ -1,13 +1,10 @@
 #ifndef _DATA_TYPES_H_
 #define _DATA_TYPES_H_
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
-#include <stdbool.h>
-#include <time.h>
 
 #define BITS_OF_BYTE 8
 #define BITS_OF_INT 32
@@ -168,7 +165,7 @@ static inline void printDecompressedData(ByteBuffer* byteBuffer, ValueType dataT
 
 static inline void printDatapoints(const DataPoints* const dataPoints) {
     // restrict the number of datapoint to print
-    int count = dataPoints->count;
+    uint64_t count = dataPoints->count;
     if (count > 32) count = 32;
 
     // Print the datapoints info

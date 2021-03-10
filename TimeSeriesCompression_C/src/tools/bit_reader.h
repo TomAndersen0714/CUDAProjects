@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "data_types.h"
 
 typedef struct _BitReader {

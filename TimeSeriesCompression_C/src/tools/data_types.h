@@ -1,13 +1,10 @@
 #ifndef _DATA_TYPES_H_
 #define _DATA_TYPES_H_
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 #include <assert.h>
-#include <stdbool.h>
-#include <time.h>
 
 #define BITS_OF_BYTE 8
 #define BITS_OF_INT 32

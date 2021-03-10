@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "compressors.h"
 #include "decompressors.h"
 #include "utils/data_types.h"
@@ -6,8 +8,8 @@
 
 
 /**
- * ²âÊÔ gorilla.cu: timestamp_compress_gorilla_gpu
- * ²âÊÔ gorilla.cu: timestamp_decompress_gorilla_gpu
+ * æµ‹è¯• gorilla.cu: timestamp_compress_gorilla_gpu
+ * æµ‹è¯• gorilla.cu: timestamp_decompress_gorilla_gpu
  */
 void test_timestamp_compress_gorilla_gpu() {
     // Declare variables
@@ -16,11 +18,11 @@ void test_timestamp_compress_gorilla_gpu() {
     char *inputFilePath;
     FILE *inputFile;
     DataPoints* dataPoints;
-    ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// ²âÊÔÕûÐÍÖµÇé¿ö
-    //ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// ²âÊÔ¸¡µãÐÍÖµÇé¿ö
+    ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// æµ‹è¯•æ•´åž‹å€¼æƒ…å†µ
+    //ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;// æµ‹è¯•æµ®ç‚¹åž‹å€¼æƒ…å†µ
 
     //////////////////////////////////////////////////////////////////////////
-    // ²âÊÔ gorilla.cu: timestamp_compress_gorilla_gpu
+    // æµ‹è¯• gorilla.cu: timestamp_compress_gorilla_gpu
     inputFilePath = (char*)malloc(strlen(base_dir) + strlen(dataset) + 1);
     strcpy(inputFilePath, base_dir);
     strcat(inputFilePath, dataset);

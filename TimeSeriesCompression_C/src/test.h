@@ -1,5 +1,8 @@
 #ifndef _TEST_H_
 #define _TEST_H_
+
+#include <string.h>
+
 #include "tools/data_types.h"
 #include "tools/compressors.h"
 #include "tools/decompressors.h"
