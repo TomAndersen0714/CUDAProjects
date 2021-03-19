@@ -295,6 +295,7 @@ static void Compress(int blocks, int warpsperblock, int dimensionality)
   }
 
   // read in trace to cbuf
+  // the max number of double-float numbers to compress is 64*1024*1024(i.e. 512MB)
   int doubles = fread(cbuf, 8, MAX, stdin);
 
   // calculate required padding for last chunk

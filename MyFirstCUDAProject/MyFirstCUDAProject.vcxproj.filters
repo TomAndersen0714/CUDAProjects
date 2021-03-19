@@ -6,8 +6,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\cuda_utils.cuh" />
     <ClInclude Include="src\test.h" />
+    <ClInclude Include="src\cuda_utils.cuh" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\test.cu" />

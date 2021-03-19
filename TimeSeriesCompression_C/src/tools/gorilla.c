@@ -25,6 +25,12 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
 
     bitWriter = bitWriterConstructor(compressedTimestamps);
 
+    // write the header in big-endian mode
+    timestamp = tsBuffer[cursor++];
+    bitWriterWriteBits(bitWriter, timestamp, BITS_OF_LONG_LONG);
+    prevTimestamp = timestamp;
+    prevDelta = 0;
+
     // Read each timestamp and compress it into byte byffer.
     //while (cursor < timestamps->length) {
     while (cursor < tsCount) {
@@ -119,12 +125,27 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
 
     bitWriter = bitWriterConstructor(compressedValues);
 
+    // write the header in big-endian mode
+    value = valBuffer[cursor++];
+    bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
+    prevValue = value;
+    if (prevValue == 0) {
+        prevLeadingZeros = 0;
+        prevTrailingZeros = 0;
+    }
+    else {
+        prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);
+    }
+
     // Read each value and compress it into byte byffer.
     while (cursor < valCount) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
         value = valBuffer[cursor++];
         diff = prevValue^value;
+
+        // updata previous value
         prevValue = value;
 
         // If previous value and current value is same
@@ -164,11 +185,11 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
 
                 /*
                 Different from original implementation, 5 -> 6 bits to store the number of leading zeros,
-                avoids the special situation when high precision xor value appears.
-                In original implementation,when the leading zeros of xor residual is more than 32,
+                for special situation in which high precision xor value occurred.
+                In original implementation, when leading zeros of xor residual is more than 32,
                 you need to store the excess part in the meaningful bits, which cost more bits.
                 Actually you need calculate the distribution of the leading zeros of the xor residual first,
-                and then decide whether it needs 5 bits or 6 bits to save the leading zeros.
+                and then decide whether it needs 5 bits or 6 bits to save the leading zeros for best compression ratio.
                 */
                 bitWriterWriteBits(bitWriter, leadingZeros, 6);// Write the number of leading zeros input the next 6 bits
                 // Since 'significantBits == 0' is unoccupied, we can just store 'significantBits - 1' to
@@ -209,6 +230,12 @@ ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count)
 
     tsBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(timestamps);
+
+    // get the header in bit-endian mode
+    timestamp = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
+    tsBuffer[cursor++] = timestamp;
+    prevTimestamp = timestamp;
+    prevDelta = 0;
 
     // Decompress each timestamp from byte buffer
     while (cursor < count) {
@@ -288,6 +315,19 @@ ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
 
     valBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
+
+    // get the header in bit-endian mode
+    value = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
+    valBuffer[cursor++] = value;
+    prevValue = value;
+    if (prevValue == 0) {
+        prevLeadingZeros = 0;
+        prevTrailingZeros = 0;
+    }
+    else {
+        prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);
+    }
 
     // Decompress each value from byte buffer and write it into data byffer.
     while (cursor < count) {

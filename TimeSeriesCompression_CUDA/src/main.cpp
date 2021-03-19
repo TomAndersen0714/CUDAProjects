@@ -2,8 +2,16 @@
 
 int main(int argc, char* argv[]) {
 
-    // 测试 timestamp_compress_gorilla_gpu
-    test_timestamp_compress_gorilla_gpu();
+    // TEST:io_utils
+    //test_io_utils();
+    
+
+    // TEST gorilla.cu
+    //test_compress_gorilla_gpu();
+
+    // TEST data_types.h:printStat
+    test_printStat();
+
 
     return 0;
 }

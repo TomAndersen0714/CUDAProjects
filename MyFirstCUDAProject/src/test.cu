@@ -87,7 +87,10 @@ void test_warpid_and_laneid_instruction() {
 //////////////////////////////////////////////////////////////////////////
 // 测试 __clzll 内建函数,统计前导零个数
 __global__ static void test_clz_kernal() {
-    printf("hex: 0x%X,lzc: %d\n", threadIdx.x, __clzll(threadIdx.x));
+    printf(
+        "hex: 0x%X,leading zeros: %d,lzc: %d\n",
+        threadIdx.x, leadingZerosCount64(threadIdx.x), __clzll(threadIdx.x)
+    );
 }
 
 void test_clz() {
@@ -103,14 +106,17 @@ void test_clz() {
 //////////////////////////////////////////////////////////////////////////
 // 测试 __ffsll 内建函数,用于获取首个非0bit位置
 __global__ static void test_ffs_kernal() {
-    printf("hex: 0x%X,ffs: %d\n", threadIdx.x, __ffsll(threadIdx.x));
+    printf(
+        "hex: 0x%X,trailing zeros: %d,ffs: %d\n",
+        threadIdx.x, trailingZerosCount64(threadIdx.x), __ffsll(threadIdx.x)
+    );
 }
 
 void test_ffs() {
     dim3 grid(1);
     dim3 block(32);
 
-    test_ffs_kernal << <grid, block >> > ();
+    test_ffs_kernal <<<grid, block >>> ();
     cudaDeviceSynchronize();
 }
 // 小结 __ffsll/__ffs 内建函数返回的是"从低位到高位"首个非0bit的位置,即相当于尾端零的个数

@@ -4,25 +4,25 @@
 #include "data_types.h"
 
 // Read and parse the uncompressed file in text format.
-DataPoints* readUncompressedFile(
+DataPoints* readUncompressedData(
     FILE* inputFile,
     ValueType timestampType,
     ValueType valueType
 );
 
 // Read and parse the comressed file.
-CompressedData* readCompressedFile(FILE* inputFile);
+CompressedDPs* readCompressedData(FILE* inputFile);
 
 // Write the compressed data in binary format into specific file.
 void writeCompressedData(
     FILE* outputFile,
-    CompressedData* compressedData
+    CompressedDPs* compressedDPs
 );
 
 // Write the decompressed data in text format into specific file.
 void writeDecompressedData(
     FILE* outputFile,
-    DataPoints* decompressedData
+    DataPoints* decompressedDPs
 );
 
 #endif // _IO_UTILS_H_

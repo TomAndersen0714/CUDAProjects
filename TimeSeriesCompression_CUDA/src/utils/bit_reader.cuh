@@ -1,5 +1,8 @@
-#ifndef _BIT_READER_H_
-#define _BIT_READER_H_
+#ifndef _BIT_READER_CUH_
+#define _BIT_READER_CUH_
+
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
 
 #include "data_types.h"
 
@@ -10,6 +13,7 @@ typedef struct _BitReader {
     uint64_t cursor;
 } BitReader;
 
+/*
 // Construct a BitReader
 inline BitReader* bitReaderConstructor(ByteBuffer* byteBuffer) {
     BitReader *bitReader = (BitReader*) malloc(sizeof(BitReader));
@@ -25,9 +29,10 @@ inline BitReader* bitReaderConstructor(ByteBuffer* byteBuffer) {
 inline void bitReaderDeconstructor(BitReader* bitReader) {
     free(bitReader);
 }
+*/
 
 // Get a new byte from buffer, if all bits in cached byte have been read.
-inline void bitReaderFlipByte(BitReader* bitReader) {
+__device__ static inline void bitReaderFlipByte(BitReader* bitReader) {
     if (bitReader->leftBits == 0) {
         assert(bitReader->cursor < bitReader->byteBuffer->length);
         bitReader->cacheByte =
@@ -37,7 +42,7 @@ inline void bitReaderFlipByte(BitReader* bitReader) {
 }
 
 // Read the next bit and returns true if is '1' bit and false if not.
-inline bool bitReaderNextBit(BitReader* bitReader) {
+__device__ static inline bool bitReaderNextBit(BitReader* bitReader) {
     bool bit = bitReader->cacheByte >> (bitReader->leftBits - 1) & 1;
     bitReader->leftBits--;
     bitReaderFlipByte(bitReader);
@@ -45,7 +50,7 @@ inline bool bitReaderNextBit(BitReader* bitReader) {
 }
 
 // Read bit continuously, until next '0' bit is found or the number of read bits reach the value of 'maxBits'.
-inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits) {
+__device__ static inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits) {
     uint32_t controlBits = 0x00;
     bool bit;
 
@@ -64,7 +69,8 @@ inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits)
     return controlBits;
 }
 
-inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
+// read byte-buffer in big-endian mode
+__device__ static inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
 
     int64_t value = 0;
     byte leastSignificantBits;
@@ -93,4 +99,4 @@ inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
     }
     return value;
 }
-#endif // _BIT_READER_H_
+#endif // _BIT_READER_CUH_

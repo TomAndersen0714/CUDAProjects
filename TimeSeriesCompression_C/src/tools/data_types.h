@@ -16,6 +16,13 @@
 
 typedef unsigned char byte;
 
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 // Timestamp compression and decompression algorithms
 typedef enum _TSComAndDecomAlgo {
@@ -122,6 +129,9 @@ static inline void printDecompressedData(ByteBuffer* byteBuffer, ValueType dataT
     uint64_t* datas = (uint64_t*)byteBuffer->buffer;
     uint64_t count = byteBuffer->length / sizeof(uint64_t);
 
+    // restrict the data to print(the last 32)
+    int offset = count > 32 ? count - 32 : 0;
+
     if (dataType == _LONG_LONG) {
         for (int i = 0; i < count; i++) {
             printf("%lld\n", datas[i]);
@@ -146,10 +156,13 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
 
     // Print data points
     printf("Timestamps:\tValues:\n");
+    // restrict the data to print(the last 32)
+    int offset = dataPoints->count > 32 ? dataPoints->count - 32 : 0;
+
     if (dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _LONG_LONG
         ) {
-        for (int i = 0; i < dataPoints->count; i++) {
+        for (int i = offset; i < dataPoints->count; i++) {
             printf(
                 "%llu\t%llu\n",
                 dataPoints->timestamps[i],
@@ -161,7 +174,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
         dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _DOUBLE
         ) {
-        for (int i = 0; i < dataPoints->count; i++) {
+        for (int i = offset; i < dataPoints->count; i++) {
             printf(
                 "%llu\t%lf\n",
                 dataPoints->timestamps[i],
@@ -197,17 +210,17 @@ static inline void printStat(
 ) {
     uint64_t uncompressedTimestampSize = datapoints->count * sizeof(uint64_t);
     uint64_t uncompressedValuesSize = datapoints->count * sizeof(uint64_t);
-    uint64_t compressedTimestmapsSize = compressedTimestamps->length;
+    uint64_t compressedTimestampsSize = compressedTimestamps->length;
     uint64_t compressedValuesSize = compressedValues->length;
-    float timestampsCompRatio = (float)uncompressedTimestampSize / compressedTimestmapsSize;
+    float timestampsCompRatio = (float)uncompressedTimestampSize / compressedTimestampsSize;
     float valuesCompRatio = (float)uncompressedValuesSize / compressedValuesSize;
     float compRatio = (float)(uncompressedTimestampSize + uncompressedValuesSize)
-        / (compressedTimestmapsSize + compressedValuesSize);
+        / (compressedTimestampsSize + compressedValuesSize);
     double compSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / compressionTimeMillis * 1000;
     double decompSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / decompressionTimeMillis * 1000;
 
     // Print statistic info
-    printf("Timestamps: %lluB -> %lluB\n", uncompressedTimestampSize, compressedTimestmapsSize);
+    printf("Timestamps: %lluB -> %lluB\n", uncompressedTimestampSize, compressedTimestampsSize);
     printf("Timestamps compression ratio: %f\n", timestampsCompRatio);
     printf("Metric values: %lluB -> %lluB\n", uncompressedValuesSize, compressedValuesSize);
     printf("Metric values compression ratio: %f\n", valuesCompRatio);

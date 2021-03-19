@@ -1,5 +1,5 @@
-#ifndef _BIT_READER_H_
-#define _BIT_READER_H_
+#ifndef _BIT_WRITER_CUH_
+#define _BIT_WRITER_CUH_
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -32,7 +32,7 @@ static inline void bitWriterDeconstructor(BitWriter* bitWriter) {
 }
 */
 
-// If cached byte is full, then write it into buffer and get next empty byte
+// If cached byte is full, write it into buffer in big-endian mode, and then clear the cached byte
 __device__ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     // If cached byte is full
     if (bitWriter->leftBits == 0) {
@@ -61,7 +61,7 @@ __device__ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     }
 };
 
-// Write the specific least significant bits of value into the buffer
+// Write the specific least significant bits of value into the buffer in big-endian mode
 __device__ static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
     int64_t shift;
     while (bits > 0) {
@@ -115,4 +115,4 @@ __device__ static inline void bitWriterFlush(BitWriter* bitWriter) {
     bitWriterFlipByte(bitWriter);
 }
 
-#endif // _BIT_READER_H_
+#endif // _BIT_WRITER_CUH_

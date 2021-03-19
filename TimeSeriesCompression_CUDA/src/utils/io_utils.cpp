@@ -1,16 +1,14 @@
 #include "io_utils.h"
 
-DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, ValueType valueType) {
+DataPoints *readUncompressedData(FILE *inputFile, ValueType timestampType, ValueType valueType) {
     // Declare variables
     uint64_t count, cursor;
     uint64_t *timestamps, *values;
     DataPoints* dataPoints;
 
     // Get the number of data points and pre-allocate momery space for it
-    if (fscanf(inputFile, "%llu", &count) == EOF) {
-        //fclose(inputFile);
-        exit(EXIT_FAILURE);
-    };
+    if (fscanf(inputFile, "%llu", &count) == EOF) exit(EXIT_FAILURE);
+
     timestamps = (uint64_t *)malloc(sizeof(uint64_t)*count);
     values = (uint64_t *)malloc(sizeof(uint64_t)*count);
     assert(timestamps != NULL && values != NULL);
@@ -18,16 +16,16 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     // Parse every line of file
     cursor = 0;
     if (timestampType == _LONG_LONG && valueType == _LONG_LONG) {
-        while (cursor < count &&
+        while (cursor < count) {
             // Format the string and convert to the values in corresponding 
             // type, then write the bits of values into the specific address
-            fscanf(inputFile, "%llu %lld", &timestamps[cursor], &values[cursor]) != EOF) {
+            assert(fscanf(inputFile, "%llu %lld",&timestamps[cursor], &values[cursor]) == 2);
             cursor++;
         }
     }
     else if (timestampType == _LONG_LONG && valueType == _DOUBLE) {
-        while (cursor < count &&
-            fscanf(inputFile, "%lld %lf", &timestamps[cursor], &values[cursor]) != EOF) {
+        while (cursor < count ) {
+            assert(fscanf(inputFile, "%llu %lf", &timestamps[cursor], &values[cursor]) == 2);
             cursor++;
         }
     }
@@ -46,67 +44,116 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     return dataPoints;
 }
 
-void writeCompressedData(FILE *outputFile, CompressedData *compressedData) {
+void writeCompressedData(
+    FILE *outputFile, 
+    CompressedDPs *compressedDPs
+) {
+    uint16_t
+        frame = compressedDPs->metadata->frame;
+    uint64_t
+        count = compressedDPs->metadata->count,
+        frame_b = frame*BYTES_OF_LONG_LONG,
+        thd = (count + frame - 1) / frame,
+        start = 0;
 
-    // Write metadata as the header of compressed file
-    fwrite(compressedData->metadata, sizeof(Metadata), 1, outputFile);
-    // Write the compressed data into file
-    fwrite(compressedData->timestamps,
-        sizeof(byte)*compressedData->metadata->tsLength, 1, outputFile);
-    fwrite(compressedData->values,
-        sizeof(byte)*compressedData->metadata->valLength, 1, outputFile);
+    // write metadata as the header of compressed file
+    assert(fwrite(compressedDPs->metadata, sizeof(Metadata), 1, outputFile) == 1);
+
+    // write the size of compressed frames
+    assert(fwrite(compressedDPs->tsLens, BYTES_OF_SHORT*thd, 1, outputFile) == 1);
+    assert(fwrite(compressedDPs->valLens, BYTES_OF_SHORT*thd, 1, outputFile) == 1);
+    
+    // compact and write the compressed data frame-by-frame
+    // compact and write the compressed timestamps
+    for (int i = 0; i < thd; i++) {
+        assert(fwrite(compressedDPs->timestamps + start, 
+            compressedDPs->tsLens[i], 1, outputFile) == 1);
+        start += frame_b;
+    }
+    
+    // compact and write the compressed values
+    start = 0;
+    for (int i = 0; i < thd; i++) {
+        assert(fwrite(compressedDPs->values + start,
+            compressedDPs->valLens[i], 1, outputFile) == 1);
+        start += frame_b;
+    }
+
 }
 
-CompressedData *readCompressedFile(FILE *inputFile) {
-    // Declare variables
+CompressedDPs *readCompressedData(FILE *inputFile) {
+    // declare variables
+    CompressedDPs *compressedDPs;
     Metadata *metadata;
-    byte *timestamps, *values;
-    CompressedData* compressedData;
+    uint16_t
+        *tsLens, *valLens;
+    byte
+        *timestamps, *values;
+    uint64_t
+        thd, tsSize = 0, valSize = 0; // the byte size of compressed timestamps and values
 
-    // Get the metadata of compressed data
+    // get the metadata of compressed data
     metadata = (Metadata *)malloc(sizeof(Metadata));
     assert(metadata != NULL);
-    fread(metadata, sizeof(Metadata), 1, inputFile);
-    // Get the compressed data
-    timestamps = (byte *)malloc(sizeof(byte)*metadata->tsLength);
-    values = (byte *)malloc(sizeof(byte)*metadata->valLength);
-    assert(timestamps != NULL && values != NULL);
-    fread(timestamps, sizeof(byte)*metadata->tsLength, 1, inputFile);
-    fread(values, sizeof(byte)*metadata->valLength, 1, inputFile);
+    assert(fread(metadata, sizeof(Metadata), 1, inputFile) == 1);
 
-    // Return the compressed data points and metadata
-    compressedData = (CompressedData*)malloc(sizeof(CompressedData));
-    assert(compressedData != NULL);
-    compressedData->metadata = metadata;
-    compressedData->timestamps = timestamps;
-    compressedData->values = values;
-    return compressedData;
+    // get the compressed data
+    thd = (metadata->count + metadata->frame - 1) / metadata->frame;
+    tsLens = (uint16_t*)malloc(BYTES_OF_SHORT*thd);
+    valLens = (uint16_t*)malloc(BYTES_OF_SHORT*thd);
+    assert(tsLens != NULL);
+    assert(valLens != NULL);
+    // get the size of compressed frames
+    assert(fread(tsLens, BYTES_OF_SHORT*thd, 1, inputFile) == 1);
+    assert(fread(valLens, BYTES_OF_SHORT*thd, 1, inputFile) == 1);
+    
+    // get the compacted and compressed values
+    for (int i = 0; i < thd; i++) { // get the size of compressed data
+        tsSize += tsLens[i];
+        valSize += valLens[i];
+    }
+    timestamps = (byte*)malloc(tsSize);
+    values = (byte*)malloc(valSize);
+    assert(timestamps != NULL && values != NULL);
+    assert(fread(timestamps, tsSize, 1, inputFile) == 1);
+    assert(fread(values, valSize, 1, inputFile) == 1);
+
+    // return the compressed data points and metadata
+    compressedDPs = (CompressedDPs*)malloc(sizeof(CompressedDPs));
+    assert(compressedDPs != NULL);
+    compressedDPs->metadata = metadata;
+    compressedDPs->tsLens = tsLens;
+    compressedDPs->valLens = valLens;
+    compressedDPs->timestamps = timestamps;
+    compressedDPs->values = values;
+
+    return compressedDPs;
 }
 
-void writeDecompressedData(FILE *outputFile, DataPoints *decompressedData) {
+void writeDecompressedData(FILE *outputFile, DataPoints *decompressedDPs) {
     // Write the number of data points into file
-    fprintf(outputFile, "%lld\n", decompressedData->count);
+    fprintf(outputFile, "%lld\n", decompressedDPs->count);
 
     // Write the data points into file
     uint64_t cursor = 0;
-    if (decompressedData->timestampType == _LONG_LONG
-        && decompressedData->valueType == _LONG_LONG) {
-        while (cursor < decompressedData->count) {
+    if (decompressedDPs->timestampType == _LONG_LONG
+        && decompressedDPs->valueType == _LONG_LONG) {
+        while (cursor < decompressedDPs->count) {
             fprintf(
                 outputFile, "%lld %lld\n",
-                decompressedData->timestamps[cursor],
-                decompressedData->values[cursor]
+                decompressedDPs->timestamps[cursor],
+                decompressedDPs->values[cursor]
             );
             cursor++;
         }
     }
-    else if (decompressedData->timestampType == _LONG_LONG
-        && decompressedData->valueType == _DOUBLE) {
-        while (cursor < decompressedData->count) {
+    else if (decompressedDPs->timestampType == _LONG_LONG
+        && decompressedDPs->valueType == _DOUBLE) {
+        while (cursor < decompressedDPs->count) {
             fprintf(
                 outputFile, "%lld %lf\n",
-                decompressedData->timestamps[cursor],
-                decompressedData->values[cursor]
+                decompressedDPs->timestamps[cursor],
+                decompressedDPs->values[cursor]
             );
             cursor++;
         }

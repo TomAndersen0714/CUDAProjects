@@ -66,9 +66,5 @@
   <ItemGroup>
     <None Include="tmp\compressedOutputDataset" />
     <None Include="tmp\decompressedOutputDataset" />
-    <None Include="tmp\IoT1" />
-    <None Include="tmp\testDataset" />
-    <None Include="tmp\testDataset1" />
-    <None Include="tmp\testDataset2" />
   </ItemGroup>
 </Project>

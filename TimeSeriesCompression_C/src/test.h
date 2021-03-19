@@ -16,8 +16,8 @@ static void test_io_utils()
 {
 
     // Declare variables
-    //char *base_dir = "C:/Users/DELL/Desktop/TSDataset/with timestamps/with abnormal timestamp/ATimeSeriesDataset-master/tmp/";
-    char *base_dir = "tmp/";
+    //char *base_dir = "C:/Users/DELL/Desktop/TSDataset/with timestamps/with abnormal timestamp/ATimeSeriesDataset-master/dataset/";
+    char *base_dir = "dataset/";
     char *dataset = "testDataset";
     char *inputFilePath, *outputFilePath;
     FILE *inputFile, *outputFile;
@@ -112,8 +112,8 @@ static void test_io_utils()
 static void test_gorilla()
 {
     // Declare variables
-    char *base_dir = "tmp/";
-    char *dataset = "testDataset2";
+    char *base_dir = "dataset/";
+    char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
     DataPoints *dataPoints;
@@ -198,7 +198,7 @@ static void test_gorilla()
 static void test_rle()
 {
     // Declare variables
-    char *base_dir = "tmp/";
+    char *base_dir = "dataset/";
     char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
@@ -262,7 +262,7 @@ static void test_rle()
 static void test_bitpack()
 {
     // Declare variables
-    char *base_dir = "tmp/";
+    char *base_dir = "dataset/";
     char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
@@ -322,7 +322,7 @@ static void test_bitpack()
 static void test_bucket()
 {
     // Declare variables
-    char *base_dir = "tmp/";
+    char *base_dir = "dataset/";
     char *dataset = "testDataset";
     char *inputFilePath;
     FILE *inputFile;
@@ -380,14 +380,15 @@ static void test_bucket()
 static void test_statistic()
 {
     // Declare variables
-    char *base_dir = "tmp/";
-    char *dataset = "IoT1";
+    char *base_dir = "dataset/";
+    char *dataset = "testDataset3";
     char *inputFilePath;
     FILE *inputFile;
     DataPoints *dataPoints;
     //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// 测试整型值情况
     ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // 测试浮点型值情况
-    uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
+    //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer, compressionTimeMillis, decompressionTimeMillis;
 
     // Read the uncompressed data
     inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
@@ -403,10 +404,12 @@ static void test_statistic()
     // Print uncompressed data points
     //printDatapoints(dataPoints);
 
+
+    //timer = unixMillisecondTimestamp();
+    timer = clock();
+
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: timestamp_compress_gorilla
-
-    timer = unixMillisecondTimestamp();
 
     // Construct the buffer for uncompressed timestamps
     ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
@@ -420,7 +423,7 @@ static void test_statistic()
 
     //printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
-    compressionTimeMillis = unixMillisecondTimestamp() - timer;
+
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_compress_gorilla
 
@@ -437,7 +440,9 @@ static void test_statistic()
     //////////////////////////////////////////////////////////////////////////
 
     //compressionTimeMillis = unixMillisecondTimestamp() - timer;
-    timer = unixMillisecondTimestamp();
+    //timer = unixMillisecondTimestamp();
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
 
     //////////////////////////////////////////////////////////////////////////
     // 测试 decompressors.h: timestamp_decompress_gorilla
@@ -447,7 +452,7 @@ static void test_statistic()
         dataPoints->count);
     //printDecompressedData(decompressedTimestamps, timestampType);
     //////////////////////////////////////////////////////////////////////////
-    decompressionTimeMillis = unixMillisecondTimestamp() - timer;
+    
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_decompress_gorilla
     
@@ -457,6 +462,7 @@ static void test_statistic()
     //////////////////////////////////////////////////////////////////////////
 
     //decompressionTimeMillis = unixMillisecondTimestamp() - timer;
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
     //////////////////////////////////////////////////////////////////////////
     // 测试 data_types.h: printStat

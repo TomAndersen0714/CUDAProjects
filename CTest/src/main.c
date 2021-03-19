@@ -254,9 +254,57 @@ int main(int argc, char* argv[]) {
     clock_t start_t, end_t;
     start_t = clock();
     Sleep(1000); // sleep 1000 milliseconds
-    // PS :this function is just valid in Windows
+    // PS :function 'Sleep' is just valid in Windows
     end_t = clock();
-    printf("Interval in millis:%lld\n", (end_t - start_t) * 1000 / CLOCKS_PER_SEC);
+    printf("Interval: %lldms\n", (end_t - start_t) * 1000 / CLOCKS_PER_SEC);
+
+    // 测试 scanf 将浮点型字符串读取成长整数
+    uint64_t val_1, val_2;
+    double d_val;
+    char c_1;
+
+    scanf("%lf", &val_1);
+    printf("val_1: %llu\n", val_1);
+
+    if (scanf("%llu", &val_2) != 1) {
+        printf("Next value is wrong: ");
+    }
+    printf("val_2: %llu\n", val_2);
+
+    int num = scanf("%c%lf", &c_1, &d_val);
+    printf("%d\n", num);
+    printf("%c\n%lf\n", c_1, d_val);
+    // 小结: 使用scanf函数时,当读取的是个浮点数,而目标变量是整型时,会仅仅读取
+    // 小数点之前的整数部分,如果后续再继续读取整数,则会读取失败,后续读取的整数
+    // 值结果无法确定
+    // PS:使用scanf读取时,其返回值为成功读取的数值个数
+
+    // 测试 printf 的返回值
+    argc = printf("argc: %d\n", argc);
+    printf("argc: %d\n", argc);
+    // 小结: printf 的返回值为打印的字符个数(包括结尾的空字符),每个数字算一个字符
+
+    // 测试 printf 中格式化字符串中的'i'和'l'字符的作用
+    short s_1 = 1;
+    long l_1 = 1;
+    long long ll_1 = 1;
+    printf("%hd %li %lld\n", s_1, l_1, ll_1);
+    // 小结:i和d在格式化字符串中的作用都是相同的,l代表长度为long,ll表示长度为long long
+    // h表示长度为short,无则表示长度为普通整型
+
+    // 测试 string.h: memmove 函数
+    char str_1[] = "Hello,World";
+    //char* str_1 = "Hello,World";
+    char str_2[] = "Hello,World";
+    memmove(str_1, str_1 + 6, 5);
+    memmove(str_2, str_2 + 1, 5);
+    printf("%s\n", str_1);
+    printf("%s\n", str_2);
+    // 小结:
+    // 1.使用memmove时,其对应的内存空间必须是可修改的,如果是指向字符串字面量的指针
+    // 则无法对其进行移动和修改,但是动态分配(malloc)或者静态分配(数组)都可以进行移动
+    // 2.memmove 支持内存移动时源和目标区域存在重叠
+
 
 
     return 0;

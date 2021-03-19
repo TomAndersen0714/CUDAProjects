@@ -1,5 +1,5 @@
-#ifndef _BIT_READER_H_
-#define _BIT_READER_H_
+#ifndef _BIT_WRITER_H_
+#define _BIT_WRITER_H_
 
 #include "data_types.h"
 
@@ -50,7 +50,7 @@ static inline void bitWriterFlipByte(BitWriter* bitWriter) {
     }
 };
 
-// Write the specific least significant bits of value into the buffer
+// Write the specific least significant bits of value into the buffer in big-endian mode
 static inline void bitWriterWriteBits(BitWriter* bitWriter, uint64_t value, uint64_t bits) {
     int64_t shift;
     while (bits > 0) {
@@ -101,4 +101,4 @@ static inline void bitWriterFlush(BitWriter* bitWriter) {
     bitWriterFlipByte(bitWriter);
 }
 
-#endif // _BIT_READER_H_
+#endif // _BIT_WRITER_H_

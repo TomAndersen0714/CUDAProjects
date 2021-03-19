@@ -23,10 +23,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.c">
+    <ClCompile Include="src\test.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\test.c">
+    <ClCompile Include="src\main.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

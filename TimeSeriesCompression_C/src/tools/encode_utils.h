@@ -4,27 +4,27 @@
 #include <stdint.h>
 
 // Encode a 32-bit signed value(i.e. Integer type value) to unsigned value.
-inline int32_t encodeZigZag32(const int32_t n) {
+static inline int32_t encodeZigZag32(const int32_t n) {
     return (n << 1) ^ (n >> 31);
 }
 
 // Encode a 64-bit signed value(i.e. Integer type value) to unsigned value.
-inline int64_t encodeZigZag64(const int64_t n) {
+static inline int64_t encodeZigZag64(const int64_t n) {
     return (n << 1) ^ (n >> 63);
 }
 
 // Decode a ZigZag-encoded 32-bit value.
-inline int32_t decodeZigZag32(const int32_t n) {
+static inline int32_t decodeZigZag32(const int32_t n) {
     return ((uint32_t)n >> 1) ^ -(n & 1);
 }
 
 // Decode a ZigZag-encoded 64-bit value.
-inline int64_t decodeZigZag64(const int64_t n) {
+static inline int64_t decodeZigZag64(const int64_t n) {
     return ((uint64_t)n >> 1) ^ -(n & 1);
 }
 
 // Leading zeros count for 32-bits number.
-inline uint8_t leadingZerosCount32(uint32_t val) {
+static inline uint8_t leadingZerosCount32(uint32_t val) {
     if (val == 0) return 32;
     int n = 1;
     if (val >> 16 == 0) { n += 16; val <<= 16; }
@@ -36,7 +36,7 @@ inline uint8_t leadingZerosCount32(uint32_t val) {
 }
 
 // Leading zeros count for 64-bits number.
-inline uint8_t leadingZerosCount64(uint64_t val) {
+static inline uint8_t leadingZerosCount64(uint64_t val) {
     if (val == 0) return 64;
     int n = 1;
     uint32_t x = val >> 32;
@@ -50,7 +50,7 @@ inline uint8_t leadingZerosCount64(uint64_t val) {
 }
 
 // Trailing zeros count for 32-bits number.
-inline uint8_t trailingZerosCount32(uint32_t val) {
+static inline uint8_t trailingZerosCount32(uint32_t val) {
     int y;
     if (val == 0) return 32;
     int n = 31;
@@ -62,7 +62,7 @@ inline uint8_t trailingZerosCount32(uint32_t val) {
 }
 
 // Trailing zeros count for 32-bits number.
-inline uint8_t trailingZerosCount64(uint64_t val) {
+static inline uint8_t trailingZerosCount64(uint64_t val) {
     int x, y;
     if (val == 0) return 64;
     int n = 63;

@@ -1,3 +1,6 @@
+#ifndef _BIT_READER_H_
+#define _BIT_READER_H_
+
 #include <stdbool.h>
 #include "data_types.h"
 
@@ -62,6 +65,7 @@ static inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t m
     return controlBits;
 }
 
+// read byte-buffer in big-endian mode
 static inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
 
     int64_t value = 0;
@@ -91,3 +95,4 @@ static inline int64_t bitReaderNextLong(BitReader* bitReader, uint32_t bits) {
     }
     return value;
 }
+#endif // _BIT_READER_H_
