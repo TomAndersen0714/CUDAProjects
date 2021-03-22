@@ -86,6 +86,9 @@
     <ClCompile Include="src\test.cpp">
       <FileType>CppHeader</FileType>
     </ClCompile>
+    <CudaCompile Include="src\bitpack.cu">
+      <FileType>CppHeader</FileType>
+    </CudaCompile>
     <ClInclude Include="src\test.h" />
     <ClInclude Include="src\utils\bit_reader.cuh" />
     <ClInclude Include="src\utils\bit_writer.cuh" />
@@ -98,7 +101,19 @@
     <ClInclude Include="src\utils\timer_utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="src\bucket.cu" />
     <CudaCompile Include="src\gorilla.cu" />
+    <CudaCompile Include="src\rle.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dataset\IoT1" />
+    <None Include="dataset\IoT1_b" />
+    <None Include="dataset\testDataset" />
+    <None Include="dataset\testDataset1" />
+    <None Include="dataset\testDataset1_b" />
+    <None Include="dataset\testDataset2" />
+    <None Include="dataset\testDataset2_b" />
+    <None Include="dataset\testDataset_b" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

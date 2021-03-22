@@ -119,33 +119,51 @@ static inline void freeCompressedData(CompressedData* const compressedData) {
 }
 
 static inline void printCompressedData(ByteBuffer* byteBuffer) {
-    for (int i = 0; i < byteBuffer->length; i++) {
+    // restrict the number of bytes to print
+    uint64_t 
+        len = 32,
+        offset = byteBuffer->length > len ? byteBuffer->length - len : 0;
+
+    printf("Compressed data(the last %llu bytes):\n", len);
+    for (uint64_t i = offset; i < byteBuffer->length; i++) {
         printf("%02X ", byteBuffer->buffer[i]);
     }
     puts(""); // print new line
 }
 
 static inline void printDecompressedData(ByteBuffer* byteBuffer, ValueType dataType) {
-    uint64_t* datas = (uint64_t*)byteBuffer->buffer;
-    uint64_t count = byteBuffer->length / sizeof(uint64_t);
+    uint64_t
+        *datas = (uint64_t*)byteBuffer->buffer,
+        count = byteBuffer->length / sizeof(uint64_t),
+        len = 32;
 
     // restrict the data to print(the last 32)
-    int offset = count > 32 ? count - 32 : 0;
+    uint64_t offset = count > len ? count - len : 0;
 
+    printf("Decompressed data(the last %llu): \n", len);
     if (dataType == _LONG_LONG) {
-        for (int i = 0; i < count; i++) {
+        for (uint64_t i = offset; i < count; i++) {
             printf("%lld\n", datas[i]);
         }
     }
     else {
-        for (int i = 0; i < count; i++) {
+        for (uint64_t i = offset; i < count; i++) {
             printf("%lf\n", datas[i]);
         }
     }
     puts("");
 }
 
-static inline void printDatapoints(const DataPoints* const dataPoints) {
+static inline void printDataPoints(const DataPoints* const dataPoints) {
+
+    // restrict the number of datapoint to print
+    uint64_t
+        count = dataPoints->count,
+        len = 32,
+        offset; // the offset of data to print
+
+    offset = count > len ? count - len : 0;
+
     // Print the datapoints info
     printf(
         "TimestampType: %d, ValueType: %d, Count: %llu \n",
@@ -155,14 +173,11 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
     );
 
     // Print data points
-    printf("Timestamps:\tValues:\n");
-    // restrict the data to print(the last 32)
-    int offset = dataPoints->count > 32 ? dataPoints->count - 32 : 0;
-
+    printf("Datapoints(the last %llu):\n", len);
     if (dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _LONG_LONG
         ) {
-        for (int i = offset; i < dataPoints->count; i++) {
+        for (uint64_t i = offset; i < dataPoints->count; i++) {
             printf(
                 "%llu\t%llu\n",
                 dataPoints->timestamps[i],
@@ -174,7 +189,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
         dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _DOUBLE
         ) {
-        for (int i = offset; i < dataPoints->count; i++) {
+        for (uint64_t i = offset; i < dataPoints->count; i++) {
             printf(
                 "%llu\t%lf\n",
                 dataPoints->timestamps[i],

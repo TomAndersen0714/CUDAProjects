@@ -5,7 +5,7 @@ static const uint32_t DELTA_MASK_3 = 0b10 << 3;
 static const uint32_t DELTA_MASK_5 = 0b110 << 5;
 static const uint32_t DELTA_MASK_9 = 0b1110 << 9;
 
-static inline void flushZeros(BitWriter* bitWriter, int32_t* storedZeros) {
+static inline void flushZeros(BitWriter *bitWriter, int32_t *storedZeros) {
     while ((*storedZeros) > 0) {
         // Tips: since storedZeros == 0 is unoccupied, we can utilize it to cover a larger range
         (*storedZeros)--;
@@ -113,7 +113,7 @@ ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
             default:
                 // '1111'+32
                 bitWriterWriteBits(bitWriter, 0b1111, 4); // Write '1111' control bits.
-                // Since it only takes 4 bytes(i.e. 32 bits) to save a unix timestamp input second, we write
+                // Since it only takes 4 bytes(i.e. 32 bits) to save a unix timestamp in seconds, we write
                 // delta-of-delta using 32 bits.
                 bitWriterWriteBits(bitWriter, deltaOfDelta, 32);
                 break;
@@ -159,7 +159,7 @@ ByteBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t count) {
 
     // Decompress each timestamp from byte buffer
     while (cursor < count) {
-        // If storedZeros != 0, previous and current timestamp interval(delta) is same,
+        // If storedZeros != 0, previous and current timestamp interval/delta is same,
         // just update prevTimestamp and storedZeros, and return prevTimestamp.
         if (storedZeros > 0) {
             storedZeros--;
@@ -188,7 +188,7 @@ ByteBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t count) {
                 storedZeros = (uint32_t)bitReaderNextLong(bitReader, 5);
                 break;
             }
-            // Since we have decreased the 'storedZeros' by 1 when we
+            // Since we have reduced the 'storedZeros' by 1 when we
             // compress it, we need to restore it's value here.
             storedZeros++;
 
@@ -222,7 +222,7 @@ ByteBuffer* timestamp_decompress_rle(ByteBuffer* timestamps, uint64_t count) {
         // Decode the deltaOfDelta value.
         deltaOfDelta = decodeZigZag32((int32_t)deltaOfDelta);
 
-        // Since we have decreased the 'delta-of-delta' by 1 when we compress the 'delta-of-delta',
+        // Since we have reduced the 'delta-of-delta' by 1 when we compress the 'delta-of-delta',
         // we restore the value here.
         if (deltaOfDelta >= 0) deltaOfDelta++;
 

@@ -23,8 +23,9 @@ void test_io_utils() {
     // TEST:readUncompressedData
     inputFile = fopen(inputFilePath, "r");
     assert(inputFile != NULL);
-    DataPoints *dataPoints = readUncompressedData(
-        inputFile, timestampType, valueType);
+    DataPoints *dataPoints = readUncompressedFile(
+        inputFile, timestampType, valueType
+    );
     // print the datapoints info
     printDatapoints(dataPoints);
 
@@ -103,7 +104,7 @@ void test_io_utils() {
     inputFile = fopen(outputFilePath, "r");
     assert(inputFile != NULL);
 
-    compressedDPs = readCompressedData(inputFile);
+    compressedDPs = readCompressedFile(inputFile);
 
     // print metadata
     printMetadata(compressedDPs->metadata);
@@ -133,28 +134,22 @@ void test_io_utils() {
 void test_compress_gorilla_gpu() 
 {
     // declare
-    char inputFilePath[] = "dataset/IoT1";
-    FILE *inputFile;
-    DataPoints* dataPoints;
-    // test metric value in double type
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;
-    // test metric value in long type
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;
-    uint32_t block = 8, warp = 8;
+    char inputFilePath[] = "dataset/testDataset3_b";
+    DataPoints
+        *dataPoints;
+    uint32_t
+        block = 8, warp = 32;
+
+    // read the uncompressed data
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // print the last 32 data points
+    printDatapoints(dataPoints);
+
+
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:timestamp_compress_gorilla_gpu
-
-    inputFile = fopen(inputFilePath, "r");
-    assert(inputFile != NULL);
-
-    // read the uncompressed data
-    dataPoints = readUncompressedData(
-        inputFile, timestampType, valueType
-    );
-
-    // print uncompressed data points
-    printDatapoints(dataPoints);
 
     // construct the buffer for uncompressed timestamps
     ByteBuffer *tsByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
@@ -168,15 +163,14 @@ void test_compress_gorilla_gpu()
         timestamp_compress_gorilla_gpu(tsByteBuffer, block, warp);
 
     // print the compressed data
-    printf("Compress timestamps(thread 0-3): \n");
-    printCompressedData(compressedData_t);
+    //printCompressedData(compressedData_t);
 
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:value_compress_gorilla_gpu
 
-    // construct the buffer for uncompressed timestamps
+    // construct the buffer for uncompressed values
     ByteBuffer *valByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
     assert(valByteBuffer != NULL);
     valByteBuffer->buffer = (byte*)dataPoints->values;
@@ -188,8 +182,7 @@ void test_compress_gorilla_gpu()
         value_compress_gorilla_gpu(valByteBuffer, block, warp);
 
     // print the compressed data
-    printf("Compress values(thread 0-3): \n");
-    printCompressedData(compressedData_v);
+    //printCompressedData(compressedData_v);
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -223,8 +216,7 @@ void test_compress_gorilla_gpu()
         timestamp_decompress_gorilla_gpu(compressedData_t, block, warp);
 
     // print the decompressed data
-    printf("Decompressed timestamps(the last 32): \n");
-    printDecompressedData(decompressedData_t, timestampType);
+    printDecompressedData(decompressedData_t, dataPoints->timestampType);
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -250,13 +242,11 @@ void test_compress_gorilla_gpu()
         value_decompress_gorilla_gpu(compressedData_v, block, warp);
 
     // print the decompressed data
-    printf("Decompressed values(the last 32): \n");
-    printDecompressedData(decompressedData_v, valueType);
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
 
     //////////////////////////////////////////////////////////////////////////
 
     // free memory
-    fclose(inputFile);
     freeDataPoints(dataPoints);
     freeCompressedData(compressedData_t);
     freeCompressedData(compressedData_v);
@@ -275,19 +265,17 @@ void test_printStat()
     ValueType timestampType = _LONG_LONG, valueType = _DOUBLE;
     // test metric value in long type
     //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;
-    uint32_t block = 8, warp = 32;
+    uint32_t 
+        block = 8, warp = 32;
     uint64_t
         compressionTimeMillis, decompressionTimeMillis;
     clock_t timer;
-
-    //////////////////////////////////////////////////////////////////////////
-    // TEST:timestamp_compress_gorilla_gpu
 
     inputFile = fopen(inputFilePath, "r");
     assert(inputFile != NULL);
 
     // read the uncompressed data
-    dataPoints = readUncompressedData(
+    dataPoints = readUncompressedFile(
         inputFile, timestampType, valueType
     );
 
@@ -295,6 +283,9 @@ void test_printStat()
     /*printDatapoints(dataPoints);*/
 
     timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:timestamp_compress_gorilla_gpu
 
     // construct the buffer for uncompressed timestamps
     ByteBuffer *tsByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
@@ -316,7 +307,7 @@ void test_printStat()
     //////////////////////////////////////////////////////////////////////////
     // TEST:value_compress_gorilla_gpu
 
-    // construct the buffer for uncompressed timestamps
+    // construct the buffer for uncompressed values
     ByteBuffer *valByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
     assert(valByteBuffer != NULL);
     valByteBuffer->buffer = (byte*)dataPoints->values;
@@ -416,4 +407,255 @@ void test_printStat()
     freeByteBuffer(decompressedData_v);
 }
 
+void test_compactData()
+{
+    // declare
+    char inputFilePath[] = "dataset/testDataset3_b";
+    DataPoints *dataPoints;
+    uint32_t 
+        block = 8, warp = 32;
+    uint64_t
+        compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer;
+
+    // read the uncompressed data
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // print the last 32 data points
+    printDatapoints(dataPoints);
+
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:timestamp_compress_gorilla_gpu
+
+    // construct the buffer for uncompressed timestamps
+    ByteBuffer *tsByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    assert(tsByteBuffer != NULL);
+    tsByteBuffer->buffer = (byte*)dataPoints->timestamps;
+    tsByteBuffer->length = dataPoints->count*BYTES_OF_LONG_LONG;
+
+    // compress the data points, and get the compressed data 
+    // which is not compacted
+    CompressedData *compressedData_t =
+        timestamp_compress_gorilla_gpu(tsByteBuffer, block, warp);
+
+    // print the compressed data
+    //printCompressedData(compressedData_t);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_compress_gorilla_gpu
+
+    // construct the buffer for uncompressed values
+    ByteBuffer *valByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    assert(valByteBuffer != NULL);
+    valByteBuffer->buffer = (byte*)dataPoints->values;
+    valByteBuffer->length = dataPoints->count*BYTES_OF_LONG_LONG;
+
+    // compress the data points, and get the compressed data 
+    // which is not compacted
+    CompressedData* compressedData_v =
+        value_compress_gorilla_gpu(valByteBuffer, block, warp);
+
+    // print the compressed data
+    //printCompressedData(compressedData_v);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:timestamp_decompress_gorilla_gpu
+
+    // compact the compressed data
+    compactData(compressedData_t);
+
+    // decompress the compacted data
+    ByteBuffer* decompressedData_t =
+        timestamp_decompress_gorilla_gpu(compressedData_t, block, warp);
+
+    // print the decompressed data
+    printDecompressedData(decompressedData_t, dataPoints->timestampType);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_decompress_gorilla_gpu
+    
+    // compact the compressed data
+    compactData(compressedData_v);
+
+    // decompress the compacted data
+    ByteBuffer* decompressedData_v =
+        value_decompress_gorilla_gpu(compressedData_v, block, warp);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    // print the decompressed data
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
+
+    printStat(
+        compressedData_t,
+        compressedData_v,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+
+    // free memory
+    freeDataPoints(dataPoints);
+    freeCompressedData(compressedData_t);
+    freeCompressedData(compressedData_v);
+    freeByteBuffer(decompressedData_t);
+    freeByteBuffer(decompressedData_v);
+}
+
+void test_compress_rle_gpu()
+{
+    // declare
+    char inputFilePath[] = "dataset/testDataset3_b";
+    DataPoints 
+        *dataPoints;
+    uint32_t
+        block = 8, warp = 16;
+    uint64_t
+        compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer;
+
+    // read the uncompressed data
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // print the last 32 data points
+    printDatapoints(dataPoints);
+
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:timestamp_compress_rle_gpu
+
+    // construct the buffer for uncompressed timestamps
+    ByteBuffer *tsByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    assert(tsByteBuffer != NULL);
+    tsByteBuffer->buffer = (byte*)dataPoints->timestamps;
+    tsByteBuffer->length = dataPoints->count*BYTES_OF_LONG_LONG;
+
+    // compress the data points, and get the compressed data 
+    // which is not compacted
+    CompressedData *compressedData_t =
+        timestamp_compress_rle_gpu(tsByteBuffer, block, warp);
+
+    // print the compressed data
+    //printCompressedData(compressedData_t);
+    
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:timestamp_decompress_gorilla_gpu
+
+    // compact the compressed data
+    compactData(compressedData_t);
+
+    // decompress the compacted data
+    ByteBuffer* decompressedData_t =
+        timestamp_decompress_rle_gpu(compressedData_t, block, warp);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    // print the decompressed data
+    printDecompressedData(decompressedData_t, dataPoints->timestampType);
+
+    printStat(
+        compressedData_t,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // free memory
+    freeDataPoints(dataPoints);
+    freeCompressedData(compressedData_t);
+    freeByteBuffer(decompressedData_t);
+}
+
+void test_compress_bitpack_gpu()
+{
+    // declare
+    char inputFilePath[] = "dataset/testDataset4_b";
+    DataPoints 
+        *dataPoints;
+    uint32_t
+        block = 8, warp = 32;
+    uint64_t
+        compressionTimeMillis, decompressionTimeMillis;
+    clock_t 
+        timer;
+
+    // read the uncompressed data
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // print the last 32 data points
+    printDatapoints(dataPoints);
+
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_compress_bitpack_gpu
+
+    // construct the buffer for uncompressed values
+    ByteBuffer *valByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    assert(valByteBuffer != NULL);
+    valByteBuffer->buffer = (byte*)dataPoints->values;
+    valByteBuffer->length = dataPoints->count*BYTES_OF_LONG_LONG;
+
+    // compress the data points, and get the compressed data 
+    // which is not compacted
+    CompressedData* compressedData_v =
+        value_compress_bitpack_gpu(valByteBuffer, block, warp);
+
+    // print the compressed data
+    //printCompressedData(compressedData_v);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_decompress_bitpack_gpu
+
+    // compact the compressed data
+    compactData(compressedData_v);
+
+    // decompress the compacted data
+    ByteBuffer* decompressedData_v =
+        value_decompress_bitpack_gpu(compressedData_v, block, warp);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    // print the decompressed data
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
+
+    printStat(
+        compressedData_v,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+
+    // free memory
+    freeDataPoints(dataPoints);
+    freeCompressedData(compressedData_v);
+    freeByteBuffer(decompressedData_v);
+}
 

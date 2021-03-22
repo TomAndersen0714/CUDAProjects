@@ -29,18 +29,18 @@ __device__ static inline void timestamp_compress_device(
     int64_t timestamp, prevTimestamp;
     int32_t newDelta, deltaOfDelta, prevDelta;
     uint32_t leastBitLength;
-    uint64_t *tsBuffer = c_uncompressed_t;
+    uint64_t *uncompressed_t = c_uncompressed_t;
 
     // cause the header of current frame has been decided(i.e. 
     // 'start' must >=1), we can set the previous timestamp and 
     // 'delta' value as follow
-    prevTimestamp = tsBuffer[start - 1];
+    prevTimestamp = uncompressed_t[start - 1];
     prevDelta = 0;
 
     // compress every timestamp in the specific scope of uncompressed buffer
     for (int cur = start; cur < end; cur++) {
-        // Calculate the delta of delta of timestamp.
-        timestamp = tsBuffer[cur];
+        // calculate the delta of delta of timestamp.
+        timestamp = uncompressed_t[cur];
 
         // PS: since original implementation in gorilla paper requires that delta-of-delta
         // of timestamps can be stored by a signed 32-bit value, it doesn't support
@@ -207,6 +207,8 @@ CompressedData* timestamp_compress_gorilla_gpu(
     //    d_offs, offs,
     //    BYTES_OF_INT*(thds + 1), cudaMemcpyHostToDevice
     //));
+
+    // use global __constant__ variables to pass the params to avoid passing common params between functions
     checkCudaError(cudaMemcpyToSymbol(c_uncompressed_t, &d_uncompressed_t, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_compressed_t, &d_compressed_t, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_len_t, &d_len_t, sizeof(void *)));
@@ -270,7 +272,7 @@ __device__ static inline void timestamp_decompress_device(
         newDelta, deltaOfDelta = 0, prevDelta;
     uint64_t
         cursor = start,
-        *tsBuffer = c_decompressed_t;
+        *decompressed_t = c_decompressed_t;
 
     /*// get previous timestamp
     if (start == 0) {// if current timestamp is the first one
@@ -285,7 +287,7 @@ __device__ static inline void timestamp_decompress_device(
     // cause the header of current frame has been decided(i.e. 
     // 'start' must >=1), we can set the previous timestamp and 
     // 'delta' value as follow
-    prevTimestamp = tsBuffer[start - 1];
+    prevTimestamp = decompressed_t[start - 1];
     prevDelta = 0;
 
     // decompressed timestamps from the compressed and compacted data, and write
@@ -300,7 +302,7 @@ __device__ static inline void timestamp_decompress_device(
             prevTimestamp = prevDelta + prevTimestamp;
             // Store current timestamp into data buffer
             //dataBuffer->buffer[cursor++] = prevTimestamp;
-            tsBuffer[cursor++] = prevTimestamp;
+            decompressed_t[cursor++] = prevTimestamp;
             continue;
         case 0b10:
             // '10' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 7 bits).
@@ -341,7 +343,7 @@ __device__ static inline void timestamp_decompress_device(
         // return prevTimestamp;
         // Store current timestamp into data buffer
         //dataBuffer->buffer[cursor++] = prevTimestamp;
-        tsBuffer[cursor++] = prevTimestamp;
+        decompressed_t[cursor++] = prevTimestamp;
     }
 }
 
@@ -410,7 +412,7 @@ ByteBuffer *timestamp_decompress_gorilla_gpu(
         frame = compactedData->frame,
         *lens = compactedData->lens;
     byte const
-        *tsBuffer = compactedData->buffer;
+        *compacted_t = compactedData->buffer;
 
     thd = (count + frame - 1) / frame;
     thdPB = WARPSIZE*warp;
@@ -443,9 +445,10 @@ ByteBuffer *timestamp_decompress_gorilla_gpu(
     checkCudaError(cudaMalloc((void**)&d_compressed_t, len));
     checkCudaError(cudaMalloc((void**)&d_offs, BYTES_OF_LONG_LONG*(thd + 1)));
 
-    checkCudaError(cudaMemcpy(d_compressed_t, tsBuffer, len, cudaMemcpyHostToDevice));
+    checkCudaError(cudaMemcpy(d_compressed_t, compacted_t, len, cudaMemcpyHostToDevice));
     checkCudaError(cudaMemcpy(d_offs, offs, BYTES_OF_LONG_LONG*(thd + 1), cudaMemcpyHostToDevice));
 
+    // use global __constant__ variables to pass the params to avoid passing common params between functions
     checkCudaError(cudaMemcpyToSymbol(c_compressed_t, &d_compressed_t, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_offs, &d_offs, sizeof(void *)));
     //checkCudaError(cudaMemcpyToSymbol(c_count, &count, BYTES_OF_LONG_LONG));
@@ -505,13 +508,15 @@ __device__ static inline void value_compress_device(
         prevTrailingZeros = 0;
     }
     else {
+        /*prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);*/
         prevLeadingZeros = __clzll(prevValue);
         prevTrailingZeros = __ffsll(prevValue) - 1;
     }
 
     // compress every value in the specific scope of uncompressed buffer
     for (int cur = start; cur < end; cur++) {
-        // calculate the delta of delta of timestamp.
+        // get next value and calculate the xor value with previous one
         value = uncompressed_v[cur];
         diff = prevValue^value;
 
@@ -673,6 +678,7 @@ CompressedData *value_compress_gorilla_gpu(
         uncompressedBuffer->length, cudaMemcpyHostToDevice
     ));
 
+    // use global __constant__ variables to pass the params to avoid passing common params between functions
     checkCudaError(cudaMemcpyToSymbol(c_uncompressed_v, &d_uncompressed_v, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_compressed_v, &d_compressed_v, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_len_v, &d_len_v, sizeof(void *)));
@@ -728,7 +734,7 @@ __device__ static inline void value_decompress_device(
     uint32_t
         prevLeadingZeros, prevTrailingZeros, 
         leadingZeros, trailingZeros,
-        controlBits, significantBitLength;
+        controlBits, significantBits;
 
     // cause the header of current frame has been decided(i.e. 
     // 'start' must >=1), we can set the previous value and 
@@ -739,6 +745,8 @@ __device__ static inline void value_decompress_device(
         prevTrailingZeros = 0;
     }
     else {
+        /*prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);*/
         prevLeadingZeros = __clzll(prevValue);
         prevTrailingZeros = __ffsll(prevValue) - 1;
     }
@@ -762,8 +770,8 @@ __device__ static inline void value_decompress_device(
             // the scope of prediction(previous) meaningful bits)
 
             // read the significant bits and restore the xor value.
-            significantBitLength = BITS_OF_LONG_LONG - prevLeadingZeros - prevTrailingZeros;
-            diff = bitReaderNextLong(bitReader, significantBitLength) << prevTrailingZeros;
+            significantBits = BITS_OF_LONG_LONG - prevLeadingZeros - prevTrailingZeros;
+            diff = bitReaderNextLong(bitReader, significantBits) << prevTrailingZeros;
             value = prevValue ^ diff;
             prevValue = value;
 
@@ -778,15 +786,15 @@ __device__ static inline void value_decompress_device(
 
             // update the number of leading and trailing zeros.
             leadingZeros = (uint32_t)bitReaderNextLong(bitReader, 6);
-            significantBitLength = (uint32_t)bitReaderNextLong(bitReader, 6);
+            significantBits = (uint32_t)bitReaderNextLong(bitReader, 6);
             
             // Since we have decreased the length of significant bits by 1 for larger compression range
             // when we compress it, we restore it's value here.
-            significantBitLength++;
+            significantBits++;
 
             // read the significant bits and restore the xor value.
-            trailingZeros = BITS_OF_LONG_LONG - leadingZeros - significantBitLength;
-            diff = bitReaderNextLong(bitReader, significantBitLength) << trailingZeros;
+            trailingZeros = BITS_OF_LONG_LONG - leadingZeros - significantBits;
+            diff = bitReaderNextLong(bitReader, significantBits) << trailingZeros;
             value = prevValue ^ diff;
             prevValue = value;
 
@@ -898,6 +906,7 @@ ByteBuffer *value_decompress_gorilla_gpu(
     checkCudaError(cudaMemcpy(d_compressed_v, compressed_v, len, cudaMemcpyHostToDevice));
     checkCudaError(cudaMemcpy(d_offs, offs, BYTES_OF_LONG_LONG*(thd + 1), cudaMemcpyHostToDevice));
 
+    // use global __constant__ variables to pass the params to avoid passing common params between functions
     checkCudaError(cudaMemcpyToSymbol(c_compressed_v, &d_compressed_v, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_offs, &d_offs, sizeof(void *)));
     checkCudaError(cudaMemcpyToSymbol(c_decompressed_v, &d_decompressed_v, sizeof(void *)));

@@ -8,7 +8,7 @@ ByteBuffer* value_compress_bitpack(ByteBuffer* valByteBuffer) {
     int64_t value, prevValue = 0, frame[DEFAULT_FRAME_SIZE];
     int32_t pos = 0, maxLeastSignificantBits = 0;
     uint64_t diff, cursor = 0,
-        valCount = valByteBuffer->length / sizeof(uint64_t),
+        count = valByteBuffer->length / sizeof(uint64_t),
         *valBuffer = (uint64_t*)valByteBuffer->buffer;
 
     // Allocate memory space
@@ -21,9 +21,16 @@ ByteBuffer* value_compress_bitpack(ByteBuffer* valByteBuffer) {
 
     bitWriter = bitWriterConstructor(compressedValues);
 
+    // write the header in big-endian mode
+    value = valBuffer[cursor++];
+    bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
+    prevValue = value;
+
     // Read each value and compress it into byte byffer.
-    while (cursor < valCount) {
+    while (cursor < count) {
+        // get next value to compress
         value = valBuffer[cursor++];
+
         // If current frame is full, then flush it.
         if (pos == DEFAULT_FRAME_SIZE) {
             // If all values in the frame equals zero(i.e. 'maxLeastSignificantBits' equals 0)
@@ -74,9 +81,11 @@ ByteBuffer* value_compress_bitpack(ByteBuffer* valByteBuffer) {
             bitWriterWriteBits(bitWriter, 0b0, 6);
         }
         else {
-            // Since 'maxLeastSignificantBits' could not equals to '0',
-            // we leverage this point to cover range [1~64] by storing
-            // 'maxLeastSignificantBits-1'
+            // Since 'maxLeastSignificantBits' could vary within [1,64], and the possibility 
+            // when 'maxLeastSignificantBits' equals 1 is very small, we merge this situation
+            // into the othor one that 'maxLeastSignificantBits' equals 2 to cover [0~64] using
+            // 6 bits
+            if(maxLeastSignificantBits == 1) maxLeastSignificantBits++;
             bitWriterWriteBits(bitWriter, maxLeastSignificantBits - 1, 6);
 
             // Write the significant bits of every value in current frame into buffer.
@@ -117,6 +126,11 @@ ByteBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t count) {
 
     valBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
+
+    // get the header in bit-endian mode
+    value = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
+    valBuffer[cursor++] = value;
+    prevValue = value;
 
     // Decompress each timestamp from byte buffer
     while (cursor < count) {

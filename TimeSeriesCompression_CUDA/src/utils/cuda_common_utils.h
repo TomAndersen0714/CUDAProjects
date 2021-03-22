@@ -9,7 +9,7 @@
 // Define error check function.
 #define checkCudaError(error) check((error), __FILE__, __LINE__)
 
-void check(const cudaError_t error, const char *const file, int const line) {
+static inline void check(const cudaError_t error, const char *const file, int const line) {
     if (error != cudaSuccess) {
         printf("Error: %s:%d,  ", file, line);
         printf("code:%d, reason: %s\n", error, cudaGetErrorString(error));

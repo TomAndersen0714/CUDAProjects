@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\test.c" />
     <ClCompile Include="src\tools\bitpack.c" />
     <ClCompile Include="src\tools\bucket.c" />
     <ClCompile Include="src\tools\gorilla.c" />

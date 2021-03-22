@@ -34,7 +34,13 @@ inline void bitReaderDeconstructor(BitReader* bitReader) {
 // Get a new byte from buffer, if all bits in cached byte have been read.
 __device__ static inline void bitReaderFlipByte(BitReader* bitReader) {
     if (bitReader->leftBits == 0) {
-        assert(bitReader->cursor < bitReader->byteBuffer->length);
+        //////////////////////////////////////////////////////////////////////////
+        if (bitReader->cursor >= bitReader->byteBuffer->length) {
+            printf("cursor: %llu, length: %llu.\n", 
+                bitReader->cursor, bitReader->byteBuffer->length
+            );
+            assert(bitReader->cursor < bitReader->byteBuffer->length);
+        }
         bitReader->cacheByte =
             bitReader->byteBuffer->buffer[bitReader->cursor++];
         bitReader->leftBits = BITS_OF_BYTE;
@@ -49,7 +55,7 @@ __device__ static inline bool bitReaderNextBit(BitReader* bitReader) {
     return bit;
 }
 
-// Read bit continuously, until next '0' bit is found or the number of read bits reach the value of 'maxBits'.
+// Read bit continuously, until '0' bit is found or the number of readed bits equals 'maxBits'.
 __device__ static inline uint32_t bitReaderNextControlBits(BitReader* bitReader, uint32_t maxBits) {
     uint32_t controlBits = 0x00;
     bool bit;

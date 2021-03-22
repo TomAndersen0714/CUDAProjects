@@ -1,2 +1,2 @@
 [WarpWatch]
-Expressions=thdIdx, *((uint64_t*)(compressed_t + offs[thdIdx]))
+Expressions=@Invalid()

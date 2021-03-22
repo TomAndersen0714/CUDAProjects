@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 #define BITS_OF_BYTE 8
 #define BITS_OF_INT 32
@@ -18,7 +19,7 @@
 #define BYTES_OF_DOUBLE 8
 #define DEFAULT_BUFFER_SIZE 1024
 #define DEFAULT_FRAME_SIZE 8
-#define MIN_FRAME_SIZE 32
+#define MIN_FRAME_SIZE 256
 #define MAX_FRAME_SIZE 65536
 #define WARPSIZE 32
 #define MAX_THREADS_PER_BLOCK 1024
@@ -100,6 +101,33 @@ typedef struct _CompressedDPs {
 typedef ByteBuffer *(*compressMethod)(ByteBuffer*);
 typedef ByteBuffer *(*decompressMethod)(CompressedDPs*);
 
+
+// Compact the compressed data
+static inline void compactData(CompressedData *compressedData) {
+
+    // declare
+    byte
+        *buffer = compressedData->buffer,
+        *slow = buffer,
+        *fast = buffer;
+    uint16_t
+        frame = compressedData->frame,
+        *lens = compressedData->lens;
+    uint32_t
+        count = compressedData->count,
+        thd = (count + frame - 1) / frame;
+    uint64_t
+        frame_b = frame*BYTES_OF_LONG_LONG;
+
+    // compact the compressed data
+    for (uint32_t i = 0; i < thd; i++) {
+        assert(lens[i] <= frame_b);
+        memmove(slow, fast, lens[i]);
+        slow += lens[i];
+        fast += frame_b;
+    }
+}
+
 static inline void freeByteBuffer(ByteBuffer* const byteBuffer) {
     free(byteBuffer->buffer);
     free(byteBuffer);
@@ -143,7 +171,7 @@ static inline void printCompressedData(
 ) {
     uint32_t
         thd = (compressedData->count + compressedData->frame - 1)
-        / compressedData->frame,
+            / compressedData->frame,
         frame_b = compressedData->frame*BYTES_OF_LONG_LONG,
         start = 0;
     uint16_t
@@ -154,8 +182,10 @@ static inline void printCompressedData(
     // restrict data to print
     if (thd > 4) thd = 4;
 
+    printf("Compressed data(the first %u thread): \n", thd);
     for (uint32_t i = 0; i < thd; i++) {
         assert(lens[i] <= frame_b); // avoid accessing out of bounds
+        printf("Thread-%u:\n", i);
         for (uint32_t j = start; j < start + lens[i]; j++) {
             printf("%02X ", buffer[j]);
         }
@@ -166,18 +196,21 @@ static inline void printCompressedData(
 }
 
 static inline void printDecompressedData(
-    ByteBuffer* byteBuffer, ValueType valType
+    ByteBuffer* byteBuffer, ValueType dataType
 ) {
+    // declare
     uint64_t 
         *datas = (uint64_t*)byteBuffer->buffer;
     uint64_t 
         count = byteBuffer->length / sizeof(uint64_t),
+        len = 32, // the numeber of data to print
         offset = 0; // the offset of data to print
 
     // restrict the data to print
-    if (count > 32) offset = count - 32;
+    offset = count > len ? count - len : 0;
 
-    if (valType == _LONG_LONG) {
+    printf("Decompressed data(the last %llu):\n", len);
+    if (dataType == _LONG_LONG) {
         for (uint64_t i = offset; i < count; i++) {
             printf("%lld\n", datas[i]);
         }
@@ -207,7 +240,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
     );
 
     // Print data points
-    printf("Timestamps:\tValues:\n");
+    printf("Datapoints(the last %llu):\n", count - offset);
     if (dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _LONG_LONG
         ) {
@@ -307,9 +340,8 @@ static inline void printStat(
         compSpeed = (double)uncompressedDataSize / compressionTimeMillis * 1000,
         decompSpeed = (double)uncompressedDataSize / decompressionTimeMillis * 1000;
 
-    // Print statistic info
+    // print statistic info
     printf("Data size: %lluB -> %lluB\n", uncompressedDataSize, compressedDataSize);
-    printf("Timestamps compression ratio: %f\n", compRatio);
     printf("Compression ratio: %f\n", compRatio);
     printf("Compression time: %llums\n", compressionTimeMillis);
     printf("Compression speed: %lfB/s, %lfKB/s, %lfMB/s\n", compSpeed, compSpeed / 1024, compSpeed / (1024 * 1024));
@@ -354,7 +386,7 @@ static inline void printStat(
         compSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / compressionTimeMillis * 1000,
         decompSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / decompressionTimeMillis * 1000;
 
-    // Print statistic info
+    // print statistic info
     printf("Timestamps: %lluB -> %lluB\n", uncompressedTimestampSize, compressedTimestampsSize);
     printf("Timestamps compression ratio: %f\n", timestampsCompRatio);
     printf("Metric values: %lluB -> %lluB\n", uncompressedValuesSize, compressedValuesSize);

@@ -1,9 +1,9 @@
 #include "compressors.h"
 #include "decompressors.h"
 
-static const uint32_t DIFF_MASK_2 = 0b0 << 2;
-static const uint32_t DIFF_MASK_4 = 0b10 << 4;
-static const uint32_t DIFF_MASK_6 = 0b11 << 6;
+// static const uint32_t DIFF_MASK_2 = 0b0 << 2;
+// static const uint32_t DIFF_MASK_4 = 0b10 << 4;
+// static const uint32_t DIFF_MASK_6 = 0b11 << 6;
 
 ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
     // Declare variables
@@ -71,8 +71,8 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
                     leadingZeros + trailingZeros -
                     prevLeadingZeros - prevTrailingZeros
                 );
-                leastSignificantBits = BITS_OF_INT - leadingZerosCount32(diffLeadingZeros);
 
+                leastSignificantBits = BITS_OF_INT - leadingZerosCount32(diffLeadingZeros);
                 switch (leastSignificantBits) {// [0,32]
                 case 0:
                 case 1:
@@ -172,7 +172,7 @@ ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
     valBuffer = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
 
-    // Read each value and compress it into byte byffer.
+    // Read each value and decompress it into byte byffer.
     while (cursor < count) {
         // Read next value's control bits.
         controlBits = bitReaderNextControlBits(bitReader, 2);

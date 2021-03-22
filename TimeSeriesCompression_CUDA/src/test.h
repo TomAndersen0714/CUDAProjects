@@ -16,12 +16,30 @@ void test_io_utils();
 */
 void test_compress_gorilla_gpu();
 
-
-
 /**
  * TEST data_types.h:printStat
  */
 void test_printStat();
+
+
+/**
+* TEST data_types.h: compactData
+* TEST io_utils.h: readUncompressedFile_b
+*/
+void test_compactData();
+
+/**
+* TEST rle.cu: timestamp_compress_rle_gpu
+* TEST rle.cu: timestamp_decompress_rle_gpu
+*/
+void test_compress_rle_gpu();
+
+
+/**
+* TEST bitpack.cu: timestamp_compress_bitpack_gpu
+* TEST bitpack.cu: timestamp_decompress_bitpack_gpu
+*/
+void test_compress_bitpack_gpu();
 
 
 #endif // _TEST_H_

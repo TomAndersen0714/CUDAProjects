@@ -12,7 +12,7 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     int64_t timestamp, prevTimestamp = 0;
     int32_t newDelta, deltaOfDelta, prevDelta = 0;
     uint32_t leastBitLength;
-    uint64_t cursor = 0, tsCount = tsByteBuffer->length / sizeof(uint64_t),
+    uint64_t cursor = 0, count = tsByteBuffer->length / sizeof(uint64_t),
         *tsBuffer = (uint64_t*)tsByteBuffer->buffer;
 
     // Allocate memory space for byte buffer
@@ -33,7 +33,7 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
 
     // Read each timestamp and compress it into byte byffer.
     //while (cursor < timestamps->length) {
-    while (cursor < tsCount) {
+    while (cursor < count) {
 
         // Calculate the delta of delta of timestamp.
         timestamp = tsBuffer[cursor++];
@@ -112,7 +112,7 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
     uint32_t prevTrailingZeros = BITS_OF_LONG_LONG;
     uint64_t diff, cursor = 0,
-        valCount = valByteBuffer->length / sizeof(uint64_t),
+        count = valByteBuffer->length / sizeof(uint64_t),
         *valBuffer = (uint64_t*)valByteBuffer->buffer;
 
     // Allocate memory space
@@ -139,7 +139,7 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     }
 
     // Read each value and compress it into byte byffer.
-    while (cursor < valCount) {
+    while (cursor < count) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
         value = valBuffer[cursor++];

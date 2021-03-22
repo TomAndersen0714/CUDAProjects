@@ -9,6 +9,12 @@ int main(int argc, char* argv[]) {
     // 测试 io_utils.h
     //test_io_utils();
 
+    // 测试 io_utils.h:textToBinary
+    //test_textToBinary();
+
+    // 测试 io_utils.h:readUncompressedFile_b
+    //test_readUncompressedFile_b();
+
     // 测试 Gorilla 算法
     //test_gorilla();
     
@@ -16,7 +22,7 @@ int main(int argc, char* argv[]) {
     //test_rle();
 
     // 测试 BitPack 算法
-    //test_bitpack();
+    test_bitpack();
 
     // 测试 Bucket 算法
     //test_bucket();
@@ -27,7 +33,7 @@ int main(int argc, char* argv[]) {
     printf("%llu\n", unixSecondTimestamp());*/
 
     // 测试 data_types.h: printStat
-    test_statistic();
+    //test_statistic();
 
     return 0;
 }

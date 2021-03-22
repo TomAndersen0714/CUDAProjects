@@ -1,6 +1,8 @@
 #include "io_utils.h"
 
-DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, ValueType valueType) {
+DataPoints *readUncompressedFile(
+    FILE *inputFile, ValueType tsType, ValueType valType
+) {
     // Declare variables
     uint64_t count, cursor;
     uint64_t *timestamps, *values;
@@ -17,7 +19,7 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
 
     // Parse every line of file
     cursor = 0;
-    if (timestampType == _LONG_LONG && valueType == _LONG_LONG) {
+    if (tsType == _LONG_LONG && valType == _LONG_LONG) {
         while (cursor < count &&
             // Format the string and convert to the values in corresponding 
             // type, then write the bits of values into the specific address
@@ -25,7 +27,7 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
             cursor++;
         }
     }
-    else if (timestampType == _LONG_LONG && valueType == _DOUBLE) {
+    else if (tsType == _LONG_LONG && valType == _DOUBLE) {
         while (cursor < count &&
             fscanf(inputFile, "%lld %lf", &timestamps[cursor], &values[cursor]) != EOF) {
             cursor++;
@@ -40,13 +42,57 @@ DataPoints *readUncompressedFile(FILE *inputFile, ValueType timestampType, Value
     assert(dataPoints != NULL);
     dataPoints->count = count;
     dataPoints->timestamps = timestamps;
-    dataPoints->timestampType = timestampType;
+    dataPoints->timestampType = tsType;
     dataPoints->values = values;
-    dataPoints->valueType = valueType;
+    dataPoints->valueType = valType;
     return dataPoints;
 }
 
-void writeCompressedData(FILE *outputFile, CompressedData *compressedData) {
+DataPoints *readUncompressedFile_b(
+    const char *const input
+) {
+    // declare
+    uint64_t
+        count, *timestamps, *values;
+    ValueType
+        tsType, valType;
+    FILE 
+        *inputFile;
+    DataPoints
+        *dataPoints;
+
+    // read dataset in binary format
+    inputFile = fopen(input, "rb");
+    // read the header of dataset
+    assert(fread(&count, sizeof(uint64_t), 1, inputFile) == 1);
+    assert(fread(&tsType, sizeof(ValueType), 1, inputFile) == 1);
+    assert(fread(&valType, sizeof(ValueType), 1, inputFile) == 1);
+    // read the data
+    timestamps = (uint64_t*)malloc(sizeof(uint64_t)*count);
+    values = (uint64_t*)malloc(sizeof(uint64_t)*count);
+    assert(timestamps != NULL && values != NULL);
+    assert(fread(timestamps, sizeof(uint64_t)*count, 1, inputFile) == 1);
+    assert(fread(values, sizeof(uint64_t)*count, 1, inputFile) == 1);
+
+    // construct result
+    dataPoints = (DataPoints*)malloc(sizeof(DataPoints));
+    assert(dataPoints != NULL);
+    dataPoints->count = count;
+    dataPoints->timestampType = tsType;
+    dataPoints->valueType = valType;
+    dataPoints->timestamps = timestamps;
+    dataPoints->values = values;
+
+    // free memory
+    fclose(inputFile);
+
+    // return
+    return dataPoints;
+}
+
+void writeCompressedData(
+    FILE *outputFile, CompressedData *compressedData
+) {
 
     // Write metadata as the header of compressed file
     fwrite(compressedData->metadata, sizeof(Metadata), 1, outputFile);
@@ -57,7 +103,9 @@ void writeCompressedData(FILE *outputFile, CompressedData *compressedData) {
         sizeof(byte)*compressedData->metadata->valLength, 1, outputFile);
 }
 
-CompressedData *readCompressedFile(FILE *inputFile) {
+CompressedData *readCompressedFile(
+    FILE *inputFile
+) {
     // Declare variables
     Metadata *metadata;
     byte *timestamps, *values;
@@ -83,7 +131,9 @@ CompressedData *readCompressedFile(FILE *inputFile) {
     return compressedData;
 }
 
-void writeDecompressedData(FILE *outputFile, DataPoints *decompressedData) {
+void writeDecompressedData(
+    FILE *outputFile, DataPoints *decompressedData
+) {
     // Write the number of data points into file
     fprintf(outputFile, "%lld\n", decompressedData->count);
 
@@ -114,4 +164,40 @@ void writeDecompressedData(FILE *outputFile, DataPoints *decompressedData) {
     // Timestamp must be long long type
     // else if (timestampType == _DOUBLE_ && valueType == _LONG_LONG_)
     // else if (timestampType == _DOUBLE_ && valueType == _DOUBLE_)
+}
+
+// Transform dataset from text format into binary
+void textToBinary(
+    char const *const input, char const *const output,
+    ValueType tsType, ValueType valType
+) {
+    // declare
+    FILE 
+        *inputFile, *outputFile;
+    DataPoints 
+        *dataPoints;
+
+    // open file
+    inputFile = fopen(input, "r");
+    outputFile = fopen(output, "wb");
+    assert(inputFile != NULL && outputFile != NULL);
+
+    // read and parse file to get data points
+    dataPoints = readUncompressedFile(
+        inputFile, tsType, valType
+    );
+
+    // write data points into specific file in binary format
+    // write the header of dataset
+    assert(fwrite(&dataPoints->count, sizeof(uint64_t), 1, outputFile) == 1);
+    assert(fwrite(&dataPoints->timestampType, sizeof(ValueType), 1, outputFile) == 1);
+    assert(fwrite(&dataPoints->valueType, sizeof(ValueType), 1, outputFile) == 1);
+    // write the data
+    assert(fwrite(dataPoints->timestamps, sizeof(uint64_t)*dataPoints->count, 1, outputFile) == 1);
+    assert(fwrite(dataPoints->values, sizeof(uint64_t)*dataPoints->count, 1, outputFile) == 1);
+
+    // free memory
+    freeDataPoints(dataPoints);
+    fclose(inputFile);
+    fclose(outputFile);
 }
