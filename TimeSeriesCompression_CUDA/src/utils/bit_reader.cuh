@@ -36,9 +36,7 @@ __device__ static inline void bitReaderFlipByte(BitReader* bitReader) {
     if (bitReader->leftBits == 0) {
         //////////////////////////////////////////////////////////////////////////
         if (bitReader->cursor >= bitReader->byteBuffer->length) {
-            printf("cursor: %llu, length: %llu.\n", 
-                bitReader->cursor, bitReader->byteBuffer->length
-            );
+            printf("thdIdx: %d.\n", threadIdx.x + blockIdx.x*blockDim.x);
             assert(bitReader->cursor < bitReader->byteBuffer->length);
         }
         bitReader->cacheByte =

@@ -22,10 +22,10 @@ int main(int argc, char* argv[]) {
     //test_rle();
 
     // 测试 BitPack 算法
-    test_bitpack();
+    //test_bitpack();
 
     // 测试 Bucket 算法
-    //test_bucket();
+    test_bucket();
 
 
     // 测试 timer_utils.h

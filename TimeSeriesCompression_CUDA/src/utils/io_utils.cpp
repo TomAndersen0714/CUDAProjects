@@ -9,8 +9,8 @@ DataPoints *readUncompressedFile(
     DataPoints* dataPoints;
 
     // Get the number of data points and pre-allocate momery space for it
-    if (fscanf(inputFile, "%llu", &count) != 1) exit(EXIT_FAILURE);
-
+    //if (fscanf(inputFile, "%llu", &count) != 1) exit(EXIT_FAILURE);
+    assert(fscanf(inputFile, "%llu", &count) == 1);
     timestamps = (uint64_t *)malloc(sizeof(uint64_t)*count);
     values = (uint64_t *)malloc(sizeof(uint64_t)*count);
     assert(timestamps != NULL && values != NULL);
@@ -61,6 +61,7 @@ DataPoints *readUncompressedFile_b(
 
     // read dataset in binary format
     inputFile = fopen(input, "rb");
+    assert(inputFile != NULL);
     // read the header of dataset
     assert(fread(&count, sizeof(uint64_t), 1, inputFile) == 1);
     assert(fread(&tsType, sizeof(ValueType), 1, inputFile) == 1);

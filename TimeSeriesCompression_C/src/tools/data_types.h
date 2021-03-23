@@ -120,7 +120,7 @@ static inline void freeCompressedData(CompressedData* const compressedData) {
 
 static inline void printCompressedData(ByteBuffer* byteBuffer) {
     // restrict the number of bytes to print
-    uint64_t 
+    uint64_t
         len = 32,
         offset = byteBuffer->length > len ? byteBuffer->length - len : 0;
 
@@ -133,20 +133,23 @@ static inline void printCompressedData(ByteBuffer* byteBuffer) {
 
 static inline void printDecompressedData(ByteBuffer* byteBuffer, ValueType dataType) {
     uint64_t
-        *datas = (uint64_t*)byteBuffer->buffer,
         count = byteBuffer->length / sizeof(uint64_t),
         len = 32;
+    byte
+        *buffer = byteBuffer->buffer;
 
     // restrict the data to print(the last 32)
     uint64_t offset = count > len ? count - len : 0;
 
     printf("Decompressed data(the last %llu): \n", len);
     if (dataType == _LONG_LONG) {
+        uint64_t *datas = (uint64_t*)buffer;
         for (uint64_t i = offset; i < count; i++) {
             printf("%lld\n", datas[i]);
         }
     }
     else {
+        double *datas = (double*)buffer;
         for (uint64_t i = offset; i < count; i++) {
             printf("%lf\n", datas[i]);
         }
@@ -244,6 +247,25 @@ static inline void printStat(
     printf("Compression speed: %lfB/s, %lfKB/s, %lfMB/s\n", compSpeed, compSpeed / 1024, compSpeed / (1024 * 1024));
     printf("Decompression time: %llums\n", decompressionTimeMillis);
     printf("Decompression speed: %lfB/s, %lfKB/s, %lfMB/s\n", decompSpeed, decompSpeed / 1024, decompSpeed / (1024 * 1024));
+}
+
+// locate the first different value
+static inline void compareByteBuffer(
+    ByteBuffer *buffer1, ByteBuffer *buffer2, uint64_t count
+) {
+    uint64_t 
+        *buf1, *buf2;
+
+    buf1 = (uint64_t*)buffer1->buffer;
+    buf2 = (uint64_t*)buffer2->buffer;
+
+    for (uint64_t cur = 0; cur < count; cur++) {
+        if (buf1[cur] != buf2[cur]) {
+            printf("locaton: %llu, val1: %llu, val2: %llu\n",
+                cur, buf1[cur], buf2[cur]);
+            return;
+        }
+    }
 }
 
 #endif // _DATA_TYPES_H_

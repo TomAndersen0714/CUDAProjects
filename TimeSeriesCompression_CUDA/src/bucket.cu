@@ -391,7 +391,7 @@ __device__ static inline void value_decompress_device(
             // Read the next xor value according to the 'trailingZeros' and 'significantBits'
             // Since we reduce the 'significantBitLength' by 1 when we write it, we need
             // to restore it here.
-            xor = (bitReaderNextLong(bitReader, significantBits - 1) | (1 << (significantBits - 1)))
+            xor = (bitReaderNextLong(bitReader, significantBits - 1) | (1ULL << (significantBits - 1)))
                 << trailingZeros;
             value = prevValue ^ xor;
             prevValue = value;

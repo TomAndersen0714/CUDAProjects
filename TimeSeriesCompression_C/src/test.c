@@ -109,8 +109,8 @@ void test_textToBinary()
     // declare
     char *inputPath, *ouputPath;
 
-    inputPath = "dataset/testDataset4";
-    ouputPath = "dataset/testDataset4_b";
+    inputPath = "dataset/testDataset";
+    ouputPath = "dataset/testDataset_fb";
 
     // transform the file
     textToBinary(inputPath, ouputPath, _LONG_LONG, _DOUBLE);
@@ -134,7 +134,7 @@ void test_readUncompressedFile_b()
 
     // free memory
     freeDataPoints(dataPoints);
-    
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -145,30 +145,22 @@ void test_readUncompressedFile_b()
 //////////////////////////////////////////////////////////////////////////
 void test_gorilla()
 {
-    // Declare variables
-    char *base_dir = "dataset/";
-    char *dataset = "testDataset";
-    char *inputFilePath;
-    FILE *inputFile;
+    // declare
+    char inputFilePath[] = "dataset/Server35_f_b";
     DataPoints *dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// 测试整型值情况
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // 测试浮点型值情况
+    //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer, compressionTimeMillis, decompressionTimeMillis;
 
-    //////////////////////////////////////////////////////////////////////////
-    // 测试 compressors.h: timestamp_compress_gorilla
-    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
-    strcpy(inputFilePath, base_dir);
-    strcat(inputFilePath, dataset);
-
-    inputFile = fopen(inputFilePath, "r");
-    assert(inputFile != NULL);
-
-    // Read the uncompressed data
-    dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType);
+    // read the uncompressed data in binary format
+    dataPoints = readUncompressedFile_b(inputFilePath);
 
     // Print uncompressed data points
     printDataPoints(dataPoints);
+
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 compressors.h: timestamp_compress_gorilla
 
     // Construct the buffer for uncompressed timestamps
     ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
@@ -183,14 +175,7 @@ void test_gorilla()
     printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////////
-    // 测试 decompressors.h: timestamp_decompress_gorilla
 
-    ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
-        compressedTimestamps,
-        dataPoints->count);
-    printDecompressedData(decompressedTimestamps, timestampType);
-    //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_compress_gorilla
@@ -207,17 +192,40 @@ void test_gorilla()
     printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 decompressors.h: timestamp_decompress_gorilla
+
+    ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
+        compressedTimestamps,
+        dataPoints->count);
+    printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
+    //////////////////////////////////////////////////////////////////////////
+
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_decompress_gorilla
 
     ByteBuffer *decompressedValues = value_decompress_gorilla(
         compressedValues, dataPoints->count);
-    printDecompressedData(decompressedValues, valueType);
+
     //////////////////////////////////////////////////////////////////////////
 
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    printDecompressedData(decompressedValues, dataPoints->valueType);
+
+    // print the stat info
+    printStat(
+        dataPoints,
+        compressedTimestamps,
+        compressedValues,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
     // Free the allocated memory
-    fclose(inputFile);
-    free(inputFilePath);
     freeByteBuffer(compressedTimestamps);
     freeByteBuffer(decompressedTimestamps);
     freeByteBuffer(compressedValues);
@@ -296,13 +304,11 @@ void test_rle()
 void test_bitpack()
 {
     // Declare variables
-    char *inputFilePath;
-    FILE *inputFile;
+    char inputFilePath[] = "dataset/CinC_ECG_torso_b";
     DataPoints *datapoints;
-    clock_t timer, compressionTimeMillis, decompressionTimeMillis;
+    //clock_t timer, compressionTimeMillis, decompressionTimeMillis;
 
     // read the uncompressed data in binary format
-    inputFilePath = "dataset/testDataset3_b";
     datapoints = readUncompressedFile_b(inputFilePath);
 
     // Print uncompressed data points
@@ -340,57 +346,57 @@ void test_bitpack()
 //////////////////////////////////////////////////////////////////////////
 void test_bucket()
 {
-    // Declare variables
-    char *base_dir = "dataset/";
-    char *dataset = "testDataset";
-    char *inputFilePath;
-    FILE *inputFile;
-    DataPoints *datapoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// 测试整型值情况
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // 测试浮点型值情况
+    // declare
+    char inputFilePath[] = "dataset/testDataset3_fb";
+    DataPoints *dataPoints;
+    //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer, compressionTimeMillis, decompressionTimeMillis;
+
+    // read the uncompressed data in binary format
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // Print uncompressed data points
+    printDataPoints(dataPoints);
+
+
+    //timer = unixMillisecondTimestamp();
+    timer = clock();
 
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_compress_bucket
 
-    // Read compressed data
-    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
-    assert(inputFilePath != NULL);
-    strcpy(inputFilePath, base_dir);
-    strcat(inputFilePath, dataset);
-
-    inputFile = fopen(inputFilePath, "r");
-    assert(inputFile != NULL);
-
-    datapoints = readUncompressedFile(
-        inputFile, timestampType, valueType);
-    // Print uncompressed datapoints
-    printDataPoints(datapoints);
-
     // Construct buffer for uncompressed values
     ByteBuffer *uncompressedValues = (ByteBuffer *)malloc(sizeof(ByteBuffer));
     assert(uncompressedValues != NULL);
-    uncompressedValues->length = datapoints->count * sizeof(uint64_t);
+    uncompressedValues->length = dataPoints->count * sizeof(uint64_t);
     uncompressedValues->capacity = uncompressedValues->length;
-    uncompressedValues->buffer = (byte *)datapoints->values;
+    uncompressedValues->buffer = (byte*)dataPoints->values;
 
     // Compress values of data points
     ByteBuffer *compressedValues = value_compress_bucket(uncompressedValues);
     printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
     //////////////////////////////////////////////////////////////////////////
     // 测试 decompressors.h: value_decompress_bucket
     ByteBuffer *decompressedValues = value_decompress_bucket(
-        compressedValues, datapoints->count);
-    printDecompressedData(decompressedValues, valueType);
+        compressedValues, dataPoints->count);
+
     //////////////////////////////////////////////////////////////////////////
 
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    //compareByteBuffer(uncompressedValues, decompressedValues, dataPoints->count);
+
+    printDecompressedData(decompressedValues, dataPoints->valueType);
+
     // Free the allocated resources
-    fclose(inputFile);
-    free(inputFilePath);
     freeByteBuffer(compressedValues);
     freeByteBuffer(decompressedValues);
-    freeDataPoints(datapoints);
+    freeDataPoints(dataPoints);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -398,27 +404,13 @@ void test_bucket()
 //////////////////////////////////////////////////////////////////////////
 void test_statistic()
 {
-    // Declare variables
-    /*char *base_dir = "dataset/";
-    char *dataset = "IoT1";*/
-    char *inputFilePath;
-    FILE *inputFile;
+    // declare
+    char inputFilePath[] = "dataset/testDataset3_b";
     DataPoints *dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// 测试整型值情况
-    //ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // 测试浮点型值情况
     //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
     clock_t timer, compressionTimeMillis, decompressionTimeMillis;
 
-    // Read the uncompressed data in text format
-    /*inputFilePath = "dataset/testDataset3";
-    inputFile = fopen(inputFilePath, "r");
-    assert(inputFile != NULL);
-    dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType
-    );*/
-
     // read the uncompressed data in binary format
-    inputFilePath = "dataset/testDataset3_b";
     dataPoints = readUncompressedFile_b(inputFilePath);
 
     // Print uncompressed data points

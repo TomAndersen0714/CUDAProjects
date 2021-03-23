@@ -296,12 +296,12 @@ __device__ static inline void timestamp_decompress_device(
         timestamp, prevTimestamp,
         newDelta, deltaOfDelta, prevDelta;
     uint64_t
-        *tsBuffer = c_decompressed_t;
+        *decompressed_t = c_decompressed_t;
 
     // cause the header of current frame has been decided(i.e. 
     // 'start' must >=1), we can get the previous timestamp and 
     // 'delta' value as follow
-    prevTimestamp = tsBuffer[start - 1];
+    prevTimestamp = decompressed_t[start - 1];
     prevDelta = 0;
     deltaOfDelta = 0;
 
@@ -312,7 +312,7 @@ __device__ static inline void timestamp_decompress_device(
             storedZeros--;
             prevTimestamp = prevDelta + prevTimestamp;
             // return prevTimestamp;
-            tsBuffer[cursor] = prevTimestamp;
+            decompressed_t[cursor] = prevTimestamp;
             continue;
         }
 
@@ -338,7 +338,7 @@ __device__ static inline void timestamp_decompress_device(
             // decompress and return timestamp
             storedZeros--;
             prevTimestamp = prevDelta + prevTimestamp;
-            tsBuffer[cursor] = prevTimestamp;
+            decompressed_t[cursor] = prevTimestamp;
             continue;
         case 0b10:
             // '10' bits (i.e. deltaOfDelta value encoded by zigzag32 is stored input next 3 bits).
@@ -377,7 +377,7 @@ __device__ static inline void timestamp_decompress_device(
         prevTimestamp = timestamp;
 
         // decompress and return timestamp
-        tsBuffer[cursor] = timestamp;
+        decompressed_t[cursor] = timestamp;
     }
 }
 

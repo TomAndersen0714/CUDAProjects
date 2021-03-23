@@ -69,5 +69,6 @@
   <ItemGroup>
     <None Include="tmp\compressedOutputDataset" />
     <None Include="tmp\decompressedOutputDataset" />
+    <None Include="..\..\..\TSDataset\with timestamps\with abnormal timestamp\ATimeSeriesDataset-master\Server\Server35" />
   </ItemGroup>
 </Project>

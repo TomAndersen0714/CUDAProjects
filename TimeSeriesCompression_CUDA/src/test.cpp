@@ -134,11 +134,15 @@ void test_io_utils() {
 void test_compress_gorilla_gpu() 
 {
     // declare
-    char inputFilePath[] = "dataset/testDataset3_b";
+    char inputFilePath[] = "dataset/testDataset2_b";
     DataPoints
         *dataPoints;
     uint32_t
-        block = 8, warp = 32;
+        block = 1, warp = 1;
+    uint64_t
+        compressionTimeMillis, decompressionTimeMillis;
+    clock_t
+        timer;
 
     // read the uncompressed data
     dataPoints = readUncompressedFile_b(inputFilePath);
@@ -146,7 +150,7 @@ void test_compress_gorilla_gpu()
     // print the last 32 data points
     printDatapoints(dataPoints);
 
-
+    timer = clock();
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:timestamp_compress_gorilla_gpu
@@ -162,10 +166,10 @@ void test_compress_gorilla_gpu()
     CompressedData *compressedData_t =
         timestamp_compress_gorilla_gpu(tsByteBuffer, block, warp);
 
+    //////////////////////////////////////////////////////////////////////////
+    
     // print the compressed data
     //printCompressedData(compressedData_t);
-
-    //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:value_compress_gorilla_gpu
@@ -181,10 +185,13 @@ void test_compress_gorilla_gpu()
     CompressedData* compressedData_v =
         value_compress_gorilla_gpu(valByteBuffer, block, warp);
 
+    //////////////////////////////////////////////////////////////////////////
+
     // print the compressed data
     //printCompressedData(compressedData_v);
 
-    //////////////////////////////////////////////////////////////////////////
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:timestamp_decompress_gorilla_gpu
@@ -215,10 +222,10 @@ void test_compress_gorilla_gpu()
     ByteBuffer* decompressedData_t =
         timestamp_decompress_gorilla_gpu(compressedData_t, block, warp);
 
+    //////////////////////////////////////////////////////////////////////////
+
     // print the decompressed data
     printDecompressedData(decompressedData_t, dataPoints->timestampType);
-
-    //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
     // TEST:value_decompress_gorilla_gpu
@@ -241,10 +248,20 @@ void test_compress_gorilla_gpu()
     ByteBuffer* decompressedData_v =
         value_decompress_gorilla_gpu(compressedData_v, block, warp);
 
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
     // print the decompressed data
     printDecompressedData(decompressedData_v, dataPoints->valueType);
 
-    //////////////////////////////////////////////////////////////////////////
+    // print stat info 
+    printStat(
+        compressedData_t,
+        compressedData_v,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
 
     // free memory
     freeDataPoints(dataPoints);
@@ -589,11 +606,11 @@ void test_compress_rle_gpu()
 void test_compress_bitpack_gpu()
 {
     // declare
-    char inputFilePath[] = "dataset/testDataset4_b";
+    char inputFilePath[] = "dataset/Server35_b";
     DataPoints 
         *dataPoints;
     uint32_t
-        block = 8, warp = 32;
+        block = 1, warp = 1;
     uint64_t
         compressionTimeMillis, decompressionTimeMillis;
     clock_t 
@@ -638,6 +655,79 @@ void test_compress_bitpack_gpu()
     // decompress the compacted data
     ByteBuffer* decompressedData_v =
         value_decompress_bitpack_gpu(compressedData_v, block, warp);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    // print the decompressed data
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
+
+    printStat(
+        compressedData_v,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+
+    // free memory
+    freeDataPoints(dataPoints);
+    freeCompressedData(compressedData_v);
+    freeByteBuffer(decompressedData_v);
+}
+
+void test_compress_bucket_gpu()
+{
+    // declare
+    char inputFilePath[] = "dataset/testDataset3_fb";
+    DataPoints
+        *dataPoints;
+    uint32_t
+        block = 8, warp = 16;
+    uint64_t
+        compressionTimeMillis, decompressionTimeMillis;
+    clock_t
+        timer;
+
+    // read the uncompressed data
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // print the last 32 data points
+    printDatapoints(dataPoints);
+
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_compress_bitpack_gpu
+
+    // construct the buffer for uncompressed values
+    ByteBuffer *valByteBuffer = (ByteBuffer*)malloc(sizeof(ByteBuffer));
+    assert(valByteBuffer != NULL);
+    valByteBuffer->buffer = (byte*)dataPoints->values;
+    valByteBuffer->length = dataPoints->count*BYTES_OF_LONG_LONG;
+
+    // compress the data points, and get the compressed data 
+    // which is not compacted
+    CompressedData* compressedData_v =
+        value_compress_bucket_gpu(valByteBuffer, block, warp);
+
+    // print the compressed data
+    //printCompressedData(compressedData_v);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // TEST:value_decompress_bitpack_gpu
+
+    // compact the compressed data
+    compactData(compressedData_v);
+
+    // decompress the compacted data
+    ByteBuffer* decompressedData_v =
+        value_decompress_bucket_gpu(compressedData_v, block, warp);
 
     //////////////////////////////////////////////////////////////////////////
 

@@ -36,10 +36,15 @@ void test_compress_rle_gpu();
 
 
 /**
-* TEST bitpack.cu: timestamp_compress_bitpack_gpu
-* TEST bitpack.cu: timestamp_decompress_bitpack_gpu
+* TEST bitpack.cu: value_compress_bitpack_gpu
+* TEST bitpack.cu: value_decompress_bitpack_gpu
 */
 void test_compress_bitpack_gpu();
 
+/**
+* TEST bucket.cu: value_compress_bucket_gpu
+* TEST bucket.cu: value_decompress_bucket_gpu
+*/
+void test_compress_bucket_gpu();
 
 #endif // _TEST_H_

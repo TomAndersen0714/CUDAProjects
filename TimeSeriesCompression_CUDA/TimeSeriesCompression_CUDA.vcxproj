@@ -110,10 +110,8 @@
     <None Include="dataset\IoT1_b" />
     <None Include="dataset\testDataset" />
     <None Include="dataset\testDataset1" />
-    <None Include="dataset\testDataset1_b" />
     <None Include="dataset\testDataset2" />
     <None Include="dataset\testDataset2_b" />
-    <None Include="dataset\testDataset_b" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

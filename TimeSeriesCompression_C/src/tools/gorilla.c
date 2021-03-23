@@ -13,7 +13,7 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     int32_t newDelta, deltaOfDelta, prevDelta = 0;
     uint32_t leastBitLength;
     uint64_t cursor = 0, count = tsByteBuffer->length / sizeof(uint64_t),
-        *tsBuffer = (uint64_t*)tsByteBuffer->buffer;
+        *uncompressed_t = (uint64_t*)tsByteBuffer->buffer;
 
     // Allocate memory space for byte buffer
     compressedTimestamps = malloc(sizeof(ByteBuffer));
@@ -26,7 +26,7 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     bitWriter = bitWriterConstructor(compressedTimestamps);
 
     // write the header in big-endian mode
-    timestamp = tsBuffer[cursor++];
+    timestamp = uncompressed_t[cursor++];
     bitWriterWriteBits(bitWriter, timestamp, BITS_OF_LONG_LONG);
     prevTimestamp = timestamp;
     prevDelta = 0;
@@ -36,7 +36,7 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     while (cursor < count) {
 
         // Calculate the delta of delta of timestamp.
-        timestamp = tsBuffer[cursor++];
+        timestamp = uncompressed_t[cursor++];
 
         // PS: Since original implementation in gorilla paper requires that delta-of-delta
         // of timestamps can be stored by a signed 32-bit value, it doesn't support
@@ -111,9 +111,10 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     uint32_t leadingZeros, trailingZeros, significantBits;
     uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
     uint32_t prevTrailingZeros = BITS_OF_LONG_LONG;
-    uint64_t diff, cursor = 0,
+    uint64_t 
+        diff, cursor = 0,
         count = valByteBuffer->length / sizeof(uint64_t),
-        *valBuffer = (uint64_t*)valByteBuffer->buffer;
+        *uncompressed_v = (uint64_t*)valByteBuffer->buffer;
 
     // Allocate memory space
     compressedValues = malloc(sizeof(ByteBuffer));
@@ -126,7 +127,7 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     bitWriter = bitWriterConstructor(compressedValues);
 
     // write the header in big-endian mode
-    value = valBuffer[cursor++];
+    value = uncompressed_v[cursor++];
     bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
     prevValue = value;
     if (prevValue == 0) {
@@ -142,7 +143,7 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     while (cursor < count) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
-        value = valBuffer[cursor++];
+        value = uncompressed_v[cursor++];
         diff = prevValue^value;
 
         // updata previous value
@@ -297,11 +298,14 @@ ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count)
 
 ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
     // Declare variables
-    ByteBuffer* byteBuffer;
-    BitReader* bitReader;
-    int64_t value = 0, prevValue = 0, diff;
-    uint64_t cursor = 0, *valBuffer;;
-    uint32_t prevLeadingZeros = 0, prevTrailingZeros = 0,
+    ByteBuffer *byteBuffer;
+    BitReader *bitReader;
+    int64_t 
+        value = 0, prevValue = 0;
+    uint64_t
+        diff, cursor = 0, *decompressed_v;
+    uint32_t 
+        prevLeadingZeros = 0, prevTrailingZeros = 0,
         leadingZeros, trailingZeros,
         controlBits, significantBitLength;
 
@@ -313,12 +317,12 @@ ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
     byteBuffer->buffer = malloc(byteBuffer->length);
     assert(byteBuffer->buffer != NULL);
 
-    valBuffer = (uint64_t*)byteBuffer->buffer;
+    decompressed_v = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
 
     // get the header in bit-endian mode
     value = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
-    valBuffer[cursor++] = value;
+    decompressed_v[cursor++] = value;
     prevValue = value;
     if (prevValue == 0) {
         prevLeadingZeros = 0;
@@ -385,7 +389,7 @@ ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
         }
         // return value;
         // Store current value into data buffer
-        valBuffer[cursor++] = value;
+        decompressed_v[cursor++] = value;
     }
 
     return byteBuffer;

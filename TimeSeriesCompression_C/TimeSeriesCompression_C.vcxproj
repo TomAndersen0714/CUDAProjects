@@ -163,6 +163,7 @@
     <ClCompile Include="src\tools\rle.c" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\TSDataset\with timestamps\with abnormal timestamp\ATimeSeriesDataset-master\Server\Server35" />
     <None Include="tmp\compressedOutputDataset" />
     <None Include="tmp\decompressedOutputDataset" />
   </ItemGroup>

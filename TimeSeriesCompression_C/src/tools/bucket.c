@@ -8,14 +8,17 @@
 ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
     // Declare variables
     ByteBuffer *compressedValues;
-    BitWriter* bitWriter;
-    int64_t value, prevValue = 0;
-    uint32_t leadingZeros, trailingZeros, significantBits,
-        diffLeadingZeros, diffSignificantBits, leastSignificantBits;
-    uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
-    uint32_t prevTrailingZeros = BITS_OF_LONG_LONG;
-    uint64_t xor, cursor = 0,
-        valCount = valByteBuffer->length / sizeof(uint64_t),
+    BitWriter *bitWriter;
+    int64_t 
+        value, prevValue = 0;
+    uint32_t
+        leadingZeros, trailingZeros, significantBits,
+        diffLeadingZeros, diffSignificantBits, leastSignificantBits,
+        prevLeadingZeros = BITS_OF_LONG_LONG,
+        prevTrailingZeros = BITS_OF_LONG_LONG;
+    uint64_t 
+        xor, cursor = 0,
+        count = valByteBuffer->length / sizeof(uint64_t),
         *valBuffer = (uint64_t*)valByteBuffer->buffer;
 
     // Allocate memory space
@@ -28,8 +31,21 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
 
     bitWriter = bitWriterConstructor(compressedValues);
 
+    // write the header in big-endian mode
+    value = valBuffer[cursor++];
+    bitWriterWriteBits(bitWriter, value, BITS_OF_LONG_LONG);
+    prevValue = value;
+    if (prevValue == 0) {
+        prevLeadingZeros = 0;
+        prevTrailingZeros = 0;
+    }
+    else {
+        prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);
+    }
+
     // Read each value and compress it into byte byffer.
-    while (cursor < valCount) {
+    while (cursor < count) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
         value = valBuffer[cursor++];
@@ -65,6 +81,7 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
                 // Write '0' bit as second control bit.
                 bitWriterWriteBits(bitWriter, 0b0, 1);
 
+                // write the difference between previous number of significant bits and current one
                 significantBits = BITS_OF_LONG_LONG - leadingZeros - trailingZeros;
                 diffLeadingZeros = encodeZigZag32(leadingZeros - prevLeadingZeros);
                 diffSignificantBits = encodeZigZag32(
@@ -98,6 +115,9 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
                     // '11' as entire control bit meaning just write the number of leading zeros in 6 bits
                     bitWriterWriteBits(bitWriter, 0b11, 2);
                     bitWriterWriteBits(bitWriter, leadingZeros, 6);
+                    /* tips: since the first bit of the least significant bits must be '1', we
+                        can leverage this point to save bits
+                    */
                     break;
                 }
 
@@ -127,6 +147,9 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
                     // In this case xor value don't equal to zero, so 'significantBits' will not be '0'
                     // which we can leverage to reduce 'significantBits' by 1 to cover scope [1,64]
                     bitWriterWriteBits(bitWriter, significantBits - 1, 6);
+                    /* tips: since the first bit of the least significant bits must be '1', we
+                    can leverage this point to save bits
+                    */
                     break;
                 }
 
@@ -155,11 +178,14 @@ ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
     // Declare variables
     ByteBuffer* byteBuffer;
     BitReader* bitReader;
-    uint32_t prevLeadingZeros = 0, prevTrailingZeros = 0,
+    uint32_t 
+        prevLeadingZeros = 0, prevTrailingZeros = 0,
         leadingZeros, trailingZeros, significantBits,
         controlBits, diffLeadingZeros, diffSignificantBits;
-    int64_t value = 0, prevValue = 0, xor;
-    uint64_t cursor = 0, *valBuffer;
+    int64_t 
+        value = 0, prevValue = 0;
+    uint64_t
+        xor, cursor = 0, *decompressed_v;
 
     // Allocate memory space
     byteBuffer = malloc(sizeof(ByteBuffer));
@@ -169,8 +195,21 @@ ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
     byteBuffer->buffer = malloc(byteBuffer->length);
     assert(byteBuffer->buffer != NULL);
 
-    valBuffer = (uint64_t*)byteBuffer->buffer;
+    decompressed_v = (uint64_t*)byteBuffer->buffer;
     bitReader = bitReaderConstructor(values);
+
+    // get the header in bit-endian mode
+    value = bitReaderNextLong(bitReader, BITS_OF_LONG_LONG);
+    decompressed_v[cursor++] = value;
+    prevValue = value;
+    if (prevValue == 0) {
+        prevLeadingZeros = 0;
+        prevTrailingZeros = 0;
+    }
+    else {
+        prevLeadingZeros = leadingZerosCount64(prevValue);
+        prevTrailingZeros = trailingZerosCount64(prevValue);
+    }
 
     // Read each value and decompress it into byte byffer.
     while (cursor < count) {
@@ -239,8 +278,9 @@ ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
             // Read the next xor value according to the 'trailingZeros' and 'significantBits'
             // Since we reduce the 'significantBitLength' by 1 when we write it, we need
             // to restore it here.
-            xor = (bitReaderNextLong(bitReader, significantBits - 1) | (1 << (significantBits - 1)))
-                << trailingZeros;
+            xor = (
+                bitReaderNextLong(bitReader, significantBits - 1) | (1ULL << (significantBits - 1))
+                ) << trailingZeros;
             value = prevValue ^ xor;
             prevValue = value;
 
@@ -275,7 +315,7 @@ ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
 
         // return value;
         // Store current value into data buffer
-        valBuffer[cursor++] = value;
+        decompressed_v[cursor++] = value;
     }
 
     return byteBuffer;
