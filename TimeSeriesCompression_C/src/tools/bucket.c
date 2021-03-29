@@ -173,7 +173,7 @@ ByteBuffer * value_compress_bucket(ByteBuffer * valByteBuffer) {
     return compressedValues;
 }
 
-ByteBuffer* value_decompress_bucket(ByteBuffer* values, uint64_t count) {
+ByteBuffer *value_decompress_bucket(ByteBuffer* values, uint64_t count) {
 
     // Declare variables
     ByteBuffer* byteBuffer;

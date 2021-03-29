@@ -4,9 +4,11 @@ DataPoints *readUncompressedFile(
     FILE *inputFile, ValueType tsType, ValueType valType
 ) {
     // Declare variables
-    uint64_t count, cursor;
-    uint64_t *timestamps, *values;
-    DataPoints* dataPoints;
+    uint64_t
+        count, cursor, num,
+        *timestamps, *values;
+    DataPoints
+        *dataPoints;
 
     // Get the number of data points and pre-allocate momery space for it
     if (fscanf(inputFile, "%llu", &count) == EOF) {
@@ -53,9 +55,9 @@ DataPoints *readUncompressedFile_b(
 ) {
     // declare
     uint64_t
-        count, *timestamps, *values;
+        count = 0, *timestamps, *values, num;
     ValueType
-        tsType, valType;
+        tsType = 0, valType = 0;
     FILE 
         *inputFile;
     DataPoints
@@ -63,16 +65,22 @@ DataPoints *readUncompressedFile_b(
 
     // read dataset in binary format
     inputFile = fopen(input, "rb");
+    assert(inputFile != NULL);
     // read the header of dataset
-    assert(fread(&count, sizeof(uint64_t), 1, inputFile) == 1);
-    assert(fread(&tsType, sizeof(ValueType), 1, inputFile) == 1);
-    assert(fread(&valType, sizeof(ValueType), 1, inputFile) == 1);
+    num = fread(&count, sizeof(uint64_t), 1, inputFile);
+    assert(num == 1);
+    num = fread(&tsType, sizeof(ValueType), 1, inputFile);
+    assert(num == 1);
+    num = fread(&valType, sizeof(ValueType), 1, inputFile);
+    assert(num == 1);
     // read the data
     timestamps = (uint64_t*)malloc(sizeof(uint64_t)*count);
     values = (uint64_t*)malloc(sizeof(uint64_t)*count);
     assert(timestamps != NULL && values != NULL);
-    assert(fread(timestamps, sizeof(uint64_t)*count, 1, inputFile) == 1);
-    assert(fread(values, sizeof(uint64_t)*count, 1, inputFile) == 1);
+    num = fread(timestamps, sizeof(uint64_t)*count, 1, inputFile);
+    assert(num == 1);
+    num = fread(values, sizeof(uint64_t)*count, 1, inputFile);
+    assert(num == 1);
 
     // construct result
     dataPoints = (DataPoints*)malloc(sizeof(DataPoints));
@@ -110,17 +118,21 @@ CompressedData *readCompressedFile(
     Metadata *metadata;
     byte *timestamps, *values;
     CompressedData* compressedData;
+    uint64_t num;
 
     // Get the metadata of compressed data
     metadata = malloc(sizeof(Metadata));
     assert(metadata != NULL);
-    fread(metadata, sizeof(Metadata), 1, inputFile);
+    num = fread(metadata, sizeof(Metadata), 1, inputFile);
+    assert(num == 1);
     // Get the compressed data
     timestamps = malloc(sizeof(byte)*metadata->tsLength);
     values = malloc(sizeof(byte)*metadata->valLength);
     assert(timestamps != NULL && values != NULL);
-    fread(timestamps, sizeof(byte)*metadata->tsLength, 1, inputFile);
-    fread(values, sizeof(byte)*metadata->valLength, 1, inputFile);
+    num = fread(timestamps, sizeof(byte)*metadata->tsLength, 1, inputFile);
+    assert(num == 1);
+    num = fread(values, sizeof(byte)*metadata->valLength, 1, inputFile);
+    assert(num == 1);
 
     // Return the compressed data points and metadata
     compressedData = malloc(sizeof(CompressedData));
@@ -169,13 +181,15 @@ void writeDecompressedData(
 // Transform dataset from text format into binary
 void textToBinary(
     char const *const input, char const *const output,
-    ValueType tsType, ValueType valType
+    ValueType tsType, ValueType valType, uint64_t factor
 ) {
     // declare
     FILE 
         *inputFile, *outputFile;
     DataPoints 
         *dataPoints;
+    uint64_t
+        count, num;
 
     // open file
     inputFile = fopen(input, "r");
@@ -189,12 +203,22 @@ void textToBinary(
 
     // write data points into specific file in binary format
     // write the header of dataset
-    assert(fwrite(&dataPoints->count, sizeof(uint64_t), 1, outputFile) == 1);
-    assert(fwrite(&dataPoints->timestampType, sizeof(ValueType), 1, outputFile) == 1);
-    assert(fwrite(&dataPoints->valueType, sizeof(ValueType), 1, outputFile) == 1);
+    count = dataPoints->count*factor;
+    num = fwrite(&count, sizeof(uint64_t), 1, outputFile);
+    assert(num == 1);
+    num = fwrite(&dataPoints->timestampType, sizeof(ValueType), 1, outputFile);
+    assert(num == 1);
+    num = fwrite(&dataPoints->valueType, sizeof(ValueType), 1, outputFile);
+    assert(num == 1);
     // write the data
-    assert(fwrite(dataPoints->timestamps, sizeof(uint64_t)*dataPoints->count, 1, outputFile) == 1);
-    assert(fwrite(dataPoints->values, sizeof(uint64_t)*dataPoints->count, 1, outputFile) == 1);
+    for (uint64_t i = 0; i < factor; i++) {
+        num = fwrite(dataPoints->timestamps, sizeof(uint64_t)*dataPoints->count, 1, outputFile);
+        assert(num == 1);
+    }
+    for (uint64_t i = 0; i < factor; i++) {
+        num = fwrite(dataPoints->values, sizeof(uint64_t)*dataPoints->count, 1, outputFile);
+        assert(num == 1);
+    }
 
     // free memory
     freeDataPoints(dataPoints);

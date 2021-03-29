@@ -24,11 +24,11 @@ int main(int argc, char* argv[]) {
 
     // TEST bitpack.cu: timestamp_compress_bitpack_gpu
     // TEST bitpack.cu : timestamp_decompress_bitpack_gpu
-    //test_compress_bitpack_gpu();
+    test_compress_bitpack_gpu();
 
     //TEST bucket.cu: value_compress_bucket_gpu
     //TEST bucket.cu : value_decompress_bucket_gpu
-    test_compress_bucket_gpu();
+    //test_compress_bucket_gpu();
 
     return 0;
 }

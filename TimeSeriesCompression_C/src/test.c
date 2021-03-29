@@ -13,7 +13,7 @@
 void test_io_utils()
 {
 
-    // Declare variables
+    // declare
     //char *base_dir = "C:/Users/DELL/Desktop/TSDataset/with timestamps/with abnormal timestamp/ATimeSeriesDataset-master/dataset/";
     char *base_dir = "dataset/";
     char *dataset = "testDataset";
@@ -109,11 +109,13 @@ void test_textToBinary()
     // declare
     char *inputPath, *ouputPath;
 
-    inputPath = "dataset/testDataset";
-    ouputPath = "dataset/testDataset_fb";
+    inputPath = 
+        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT5";
+    ouputPath = 
+        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT5_i_b_1280";
 
     // transform the file
-    textToBinary(inputPath, ouputPath, _LONG_LONG, _DOUBLE);
+    textToBinary(inputPath, ouputPath, _LONG_LONG, _LONG_LONG, 1280);
 
 }
 
@@ -146,7 +148,7 @@ void test_readUncompressedFile_b()
 void test_gorilla()
 {
     // declare
-    char inputFilePath[] = "dataset/Server35_f_b";
+    char inputFilePath[] = "dataset/testDataset3_fb";
     DataPoints *dataPoints;
     //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
     clock_t timer, compressionTimeMillis, decompressionTimeMillis;
@@ -172,7 +174,7 @@ void test_gorilla()
     ByteBuffer *compressedTimestamps =
         timestamp_compress_gorilla(tsByteBuffer);
 
-    printCompressedData(compressedTimestamps);
+    //printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
 
 
@@ -189,7 +191,7 @@ void test_gorilla()
     // Compress the values of data points
     ByteBuffer *compressedValues = value_compress_gorilla(valBuffer);
     // Print the compressed values
-    printCompressedData(compressedValues);
+    //printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
 
     compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
@@ -201,7 +203,7 @@ void test_gorilla()
     ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
         compressedTimestamps,
         dataPoints->count);
-    printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
+    //printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
     //////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////
@@ -214,6 +216,7 @@ void test_gorilla()
 
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
+    printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
     printDecompressedData(decompressedValues, dataPoints->valueType);
 
     // print the stat info
@@ -303,41 +306,65 @@ void test_rle()
 //////////////////////////////////////////////////////////////////////////
 void test_bitpack()
 {
-    // Declare variables
-    char inputFilePath[] = "dataset/CinC_ECG_torso_b";
-    DataPoints *datapoints;
-    //clock_t timer, compressionTimeMillis, decompressionTimeMillis;
+    // declare
+    char inputFilePath[] =
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_value/compression_ratio/Server106_i_b";
+    DataPoints *dataPoints;
+    //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
+    clock_t timer, compressionTimeMillis, decompressionTimeMillis;
 
     // read the uncompressed data in binary format
-    datapoints = readUncompressedFile_b(inputFilePath);
+    dataPoints = readUncompressedFile_b(inputFilePath);
 
     // Print uncompressed data points
-    printDataPoints(datapoints);
+    printDataPoints(dataPoints);
 
-    // Construct the buffer for uncompreessed values
+
+    //timer = unixMillisecondTimestamp();
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 compressors.h: value_compress_bitpack
+
+    // Construct buffer for uncompressed values
     ByteBuffer *uncompressedValues = (ByteBuffer *)malloc(sizeof(ByteBuffer));
     assert(uncompressedValues != NULL);
-    uncompressedValues->length = datapoints->count * sizeof(uint64_t);
+    uncompressedValues->length = dataPoints->count * sizeof(uint64_t);
     uncompressedValues->capacity = uncompressedValues->length;
-    uncompressedValues->buffer = (byte *)datapoints->values;
+    uncompressedValues->buffer = (byte*)dataPoints->values;
 
-    // Compress the values of data points
+    // Compress values of data points
     ByteBuffer *compressedValues = value_compress_bitpack(uncompressedValues);
-
-    printCompressedData(compressedValues);
+    //printCompressedData(compressedValues);
     //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
 
     //////////////////////////////////////////////////////////////////////////
     // 测试 decompressors.h: value_decompress_bitpack
     ByteBuffer *decompressedValues = value_decompress_bitpack(
-        compressedValues, datapoints->count);
-    printDecompressedData(decompressedValues, datapoints->valueType);
+        compressedValues, dataPoints->count);
+
     //////////////////////////////////////////////////////////////////////////
 
-    // Free the allocated resources
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    //compareByteBuffer(uncompressedValues, decompressedValues, dataPoints->count);
+
+    printDecompressedData(decompressedValues, dataPoints->valueType);
+
+    printStat1(
+        dataPoints,
+        compressedValues,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // free the allocated memory
     freeByteBuffer(compressedValues);
     freeByteBuffer(decompressedValues);
-    freeDataPoints(datapoints);
+    freeDataPoints(dataPoints);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -347,7 +374,8 @@ void test_bitpack()
 void test_bucket()
 {
     // declare
-    char inputFilePath[] = "dataset/testDataset3_fb";
+    char inputFilePath[] = 
+        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/Server66_b";
     DataPoints *dataPoints;
     //uint64_t timer, compressionTimeMillis, decompressionTimeMillis;
     clock_t timer, compressionTimeMillis, decompressionTimeMillis;
@@ -393,7 +421,14 @@ void test_bucket()
 
     printDecompressedData(decompressedValues, dataPoints->valueType);
 
-    // Free the allocated resources
+    printStat1(
+        dataPoints,
+        compressedValues,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // free the allocated memory
     freeByteBuffer(compressedValues);
     freeByteBuffer(decompressedValues);
     freeDataPoints(dataPoints);
@@ -499,3 +534,139 @@ void test_statistic()
     freeByteBuffer(decompressedValues);
     freeDataPoints(dataPoints);
 }
+
+void test_gorilla_t()
+{
+    // declare
+    const char inputFilePath[] =
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
+        //"dataset/testDataset3_fb";
+    const char dataset[] = "IoT5_i_b_20";
+    DataPoints
+        *dataPoints;
+    clock_t
+        timer, compressionTimeMillis, decompressionTimeMillis;
+
+    // read the uncompressed data in binary format
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // Print uncompressed data points
+    printDataPoints(dataPoints);
+
+    //timer = unixMillisecondTimestamp();
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 compressors.h: timestamp_compress_gorilla
+
+    // Construct the buffer for uncompressed timestamps
+    ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    tsByteBuffer->buffer = (byte *)dataPoints->timestamps;
+    tsByteBuffer->length = dataPoints->count * sizeof(uint64_t);
+    tsByteBuffer->capacity = tsByteBuffer->length;
+
+    // Compress the timestamps of data points
+    ByteBuffer *compressedTimestamps =
+        timestamp_compress_gorilla(tsByteBuffer);
+
+    //printCompressedData(compressedTimestamps);
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 decompressors.h: timestamp_decompress_gorilla
+
+    ByteBuffer *decompressedTimestamps = timestamp_decompress_gorilla(
+        compressedTimestamps, dataPoints->count
+    );
+
+    //////////////////////////////////////////////////////////////////////////
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
+
+    // print stat result
+    printf("%s\n", dataset);
+    printStat1(
+        dataPoints,
+        compressedTimestamps,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // free the allocated memory
+    freeByteBuffer(compressedTimestamps);
+    freeByteBuffer(decompressedTimestamps);
+    freeDataPoints(dataPoints);
+}
+
+void test_gorilla_v()
+{
+    // declare
+    const char inputFilePath[] =
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_320";
+    //"dataset/testDataset3_fb";
+    const char dataset[] = "IoT5_i_b_320";
+    DataPoints
+        *dataPoints;
+    clock_t
+        timer, compressionTimeMillis, decompressionTimeMillis;
+
+    // read the uncompressed data in binary format
+    dataPoints = readUncompressedFile_b(inputFilePath);
+
+    // Print uncompressed data points
+    //printDataPoints(dataPoints);
+
+    timer = clock();
+
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 compressors.h: value_compress_gorilla
+
+    // Construct the buffer for uncompressed values
+    ByteBuffer *valBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
+    valBuffer->buffer = (byte *)dataPoints->values;
+    valBuffer->length = dataPoints->count * sizeof(uint64_t);
+    valBuffer->capacity = valBuffer->length;
+
+    // Compress the values of data points
+    ByteBuffer *compressedValues = value_compress_gorilla(valBuffer);
+    // Print the compressed values
+    //printCompressedData(compressedValues);
+    //////////////////////////////////////////////////////////////////////////
+
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
+
+    //////////////////////////////////////////////////////////////////////////
+    // 测试 compressors.h: value_decompress_gorilla
+
+    ByteBuffer *decompressedValues = value_decompress_gorilla(
+        compressedValues, dataPoints->count);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    //printDecompressedData(decompressedValues, dataPoints->valueType);
+
+    // print stat result
+    printf("%s\n", dataset);
+    printStat1(
+        dataPoints,
+        compressedValues,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // Free the allocated memory
+    freeByteBuffer(compressedValues);
+    freeByteBuffer(decompressedValues);
+    freeDataPoints(dataPoints);
+
+}
+
+

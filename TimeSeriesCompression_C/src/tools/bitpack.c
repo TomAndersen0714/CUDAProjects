@@ -41,9 +41,11 @@ ByteBuffer* value_compress_bitpack(ByteBuffer* valByteBuffer) {
             }
             else {
                 //flush();
-                // Since 'maxLeastSignificantBits' could not equals to '0',
-                // we leverage this point to cover range [1~64] by storing
-                // 'maxLeastSignificantBits-1'
+                // Since 'maxLeastSignificantBits' could vary within [1,64], and the possibility 
+                // when 'maxLeastSignificantBits' equals 1 is very small, we merge this situation
+                // into the othor one that 'maxLeastSignificantBits' equals 2 to cover [0~64] using
+                // 6 bits
+                if (maxLeastSignificantBits == 1) maxLeastSignificantBits++;
                 bitWriterWriteBits(bitWriter, maxLeastSignificantBits - 1, 6);
 
                 // Write the significant bits of every value in current frame into buffer.
@@ -113,7 +115,7 @@ ByteBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t count) {
     ByteBuffer* byteBuffer;
     BitReader* bitReader;
     int64_t value, prevValue = 0;
-    uint32_t pos = DEFAULT_FRAME_SIZE, maxLeastSignificantBits = 0;
+    int32_t pos = DEFAULT_FRAME_SIZE, maxLeastSignificantBits = 0;
     uint64_t diff = 0, cursor = 0, *valBuffer;;
 
     // Allocate memory space
@@ -138,7 +140,7 @@ ByteBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t count) {
         // If current compressed frame reach the end, read next maximum number of least
         // significant bit.
         if (pos == DEFAULT_FRAME_SIZE) {
-            maxLeastSignificantBits = (uint32_t)bitReaderNextLong(bitReader, 6);
+            maxLeastSignificantBits = (int32_t)bitReaderNextLong(bitReader, 6);
             pos = 0;
         }
 
@@ -146,7 +148,8 @@ ByteBuffer* value_decompress_bitpack(ByteBuffer* values, uint64_t count) {
         // current frame is zero.(i.e. current value and previous is same)
         if (maxLeastSignificantBits == 0) {
             // Restore the value.
-            value = diff + prevValue;
+            value = prevValue;
+            diff = 0;
         }
         else {
             // Decompress the difference in current frame according to the value of maxLeastSignificantBits

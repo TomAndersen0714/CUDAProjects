@@ -50,9 +50,11 @@ __device__ static inline void value_compress_device(
                 pos = 0;
             }
             else {
-                // since 'maxLeastSignificantBits' could not equals to '0',
-                // we leverage this point to cover range [1~64] by storing
-                // 'maxLeastSignificantBits-1' using 6 bits
+                // Since 'maxLeastSignificantBits' could vary within [1,64], and the possibility 
+                // when 'maxLeastSignificantBits' equals 1 is very small, we merge this situation
+                // into the othor one that 'maxLeastSignificantBits' equals 2 to cover [0~64] using
+                // 6 bits
+                if (maxLeastSignificantBits == 1) maxLeastSignificantBits++;
                 bitWriterWriteBits(bitWriter, maxLeastSignificantBits - 1, 6);
 
                 // write the significant bits of every value in current sub-frame into buffer
@@ -278,7 +280,8 @@ __device__ static inline void value_decompress_device(
         // current subframe is zero.(i.e. current value and previous is same)
         if (maxLeastSignificantBits == 0) {
             // Restore the value.
-            value = diff + prevValue;
+            value = prevValue;
+            diff = 0;
         }
         else {
 

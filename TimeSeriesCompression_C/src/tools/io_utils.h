@@ -31,7 +31,7 @@ void writeDecompressedData(
 // Transform dataset from text format into binary
 void textToBinary(
     char const *const input, char const *const output,
-    ValueType tsType, ValueType valType
+    ValueType tsType, ValueType valType,uint64_t factor
 );
 
 #endif // _IO_UTILS_H_

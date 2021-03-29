@@ -34,7 +34,6 @@ void test_compactData();
 */
 void test_compress_rle_gpu();
 
-
 /**
 * TEST bitpack.cu: value_compress_bitpack_gpu
 * TEST bitpack.cu: value_decompress_bitpack_gpu

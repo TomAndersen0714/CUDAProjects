@@ -937,8 +937,14 @@ ByteBuffer *value_decompress_gorilla_gpu(
     return byteBuffer;
 }
 
+// Warming up for GPU
+__global__ static void warmingUp() {
+    return;
+}
+
 // trigger the lazy creation of the CUDA context
 void warmUp()
 {
+    //warmingUp<<<1,1>>>();
     cudaFree(0);
 }

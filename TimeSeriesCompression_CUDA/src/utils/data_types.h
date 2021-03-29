@@ -19,7 +19,7 @@
 #define BYTES_OF_DOUBLE 8
 #define DEFAULT_BUFFER_SIZE 1024
 #define DEFAULT_FRAME_SIZE 8
-#define MIN_FRAME_SIZE 256
+#define MIN_FRAME_SIZE 1024
 #define MAX_FRAME_SIZE 65536
 #define WARPSIZE 32
 #define MAX_THREADS_PER_BLOCK 1024
@@ -171,7 +171,7 @@ static inline void printCompressedData(
 ) {
     uint32_t
         thd = (compressedData->count + compressedData->frame - 1)
-            / compressedData->frame,
+        / compressedData->frame,
         frame_b = compressedData->frame*BYTES_OF_LONG_LONG,
         start = 0;
     uint16_t
@@ -196,12 +196,12 @@ static inline void printCompressedData(
 }
 
 static inline void printDecompressedData(
-    ByteBuffer* byteBuffer, ValueType dataType
+    ByteBuffer *byteBuffer, ValueType dataType
 ) {
     // declare
-    uint64_t 
+    uint64_t
         *datas = (uint64_t*)byteBuffer->buffer;
-    uint64_t 
+    uint64_t
         count = byteBuffer->length / sizeof(uint64_t),
         len = 32, // the numeber of data to print
         offset = 0; // the offset of data to print
@@ -216,8 +216,9 @@ static inline void printDecompressedData(
         }
     }
     else {
+        double *datas_d = (double*)byteBuffer->buffer;
         for (uint64_t i = offset; i < count; i++) {
-            printf("%lf\n", datas[i]);
+            printf("%lf\n", datas_d[i]);
         }
     }
     puts("");
@@ -225,7 +226,7 @@ static inline void printDecompressedData(
 
 static inline void printDatapoints(const DataPoints* const dataPoints) {
     // restrict the number of datapoint to print
-    uint64_t 
+    uint64_t
         count = dataPoints->count,
         offset = 0; // the offset of data to print
 
@@ -241,9 +242,7 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
 
     // Print data points
     printf("Datapoints(the last %llu):\n", count - offset);
-    if (dataPoints->timestampType == _LONG_LONG
-        &&dataPoints->valueType == _LONG_LONG
-        ) {
+    if (dataPoints->timestampType == _LONG_LONG && dataPoints->valueType == _LONG_LONG) {
         for (uint64_t i = offset; i < count; i++) {
             printf(
                 "%llu\t%llu\n",
@@ -252,15 +251,13 @@ static inline void printDatapoints(const DataPoints* const dataPoints) {
             );
         }
     }
-    else if (
-        dataPoints->timestampType == _LONG_LONG
-        &&dataPoints->valueType == _DOUBLE
-        ) {
+    else if (dataPoints->timestampType == _LONG_LONG && dataPoints->valueType == _DOUBLE) {
+        double *values = (double*)dataPoints->values;
         for (uint64_t i = offset; i < count; i++) {
             printf(
                 "%llu\t%lf\n",
                 dataPoints->timestamps[i],
-                dataPoints->values[i]
+                values[i]
             );
         }
     }
@@ -283,7 +280,7 @@ static inline void printMetadata(const Metadata* const metadata) {
 }
 
 /*
-// Print the statistic info 
+// Print the statistic info
 static inline void printStat(
     DataPoints *datapoints,
     ByteBuffer *compressedTimestamps,
@@ -325,7 +322,7 @@ static inline void printStat(
         compressedDataSize = 0;
     uint32_t
         thd = (compressedData->count + compressedData->frame - 1)
-            / compressedData->frame;
+        / compressedData->frame;
 
     for (uint32_t i = 0; i < thd; i++) {
         compressedDataSize += compressedData->lens[i];
@@ -334,8 +331,8 @@ static inline void printStat(
     // space for storing the length of compressed frames
     compressedDataSize += BYTES_OF_SHORT*thd;
 
-    float
-        compRatio = (float)uncompressedDataSize / compressedDataSize;
+    double
+        compRatio = (double)uncompressedDataSize / compressedDataSize;
     double
         compSpeed = (double)uncompressedDataSize / compressionTimeMillis * 1000,
         decompSpeed = (double)uncompressedDataSize / decompressionTimeMillis * 1000;
@@ -357,15 +354,15 @@ static inline void printStat(
     uint64_t decompressionTimeMillis
 ) {
     uint64_t
-        uncompressedTimestampSize 
-            = compressedTimestamps->count*BYTES_OF_LONG_LONG,
-        uncompressedValuesSize 
-            = compressedValues->count*BYTES_OF_LONG_LONG,
-        compressedTimestampsSize = 0, 
+        uncompressedTimestampSize
+        = compressedTimestamps->count*BYTES_OF_LONG_LONG,
+        uncompressedValuesSize
+        = compressedValues->count*BYTES_OF_LONG_LONG,
+        compressedTimestampsSize = 0,
         compressedValuesSize = 0;
     uint32_t
         thd = (compressedTimestamps->count + compressedTimestamps->frame - 1)
-            / compressedTimestamps->frame;
+        / compressedTimestamps->frame;
     for (uint32_t i = 0; i < thd; i++) {
         compressedTimestampsSize += compressedTimestamps->lens[i];
         compressedValuesSize += compressedValues->lens[i];
@@ -376,13 +373,13 @@ static inline void printStat(
     compressedValuesSize += BYTES_OF_SHORT*thd;
 
     float
-        timestampsCompRatio = 
-            (float)uncompressedTimestampSize / compressedTimestampsSize,
-        valuesCompRatio = 
-            (float)uncompressedValuesSize / compressedValuesSize,
+        timestampsCompRatio =
+        (float)uncompressedTimestampSize / compressedTimestampsSize,
+        valuesCompRatio =
+        (float)uncompressedValuesSize / compressedValuesSize,
         compRatio = (float)(uncompressedTimestampSize + uncompressedValuesSize)
-            / (compressedTimestampsSize + compressedValuesSize);
-    double 
+        / (compressedTimestampsSize + compressedValuesSize);
+    double
         compSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / compressionTimeMillis * 1000,
         decompSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / decompressionTimeMillis * 1000;
 

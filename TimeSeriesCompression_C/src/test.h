@@ -47,4 +47,9 @@ void test_bucket();
 //////////////////////////////////////////////////////////////////////////
 void test_statistic();
 
+// 测试 gorilla 时间戳压缩性能
+void test_gorilla_t();
+
+// 测试 gorilla 测量值压缩性能
+void test_gorilla_v();
 #endif // _TEST_H_

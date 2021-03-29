@@ -226,16 +226,20 @@ static inline void printStat(
     uint64_t compressionTimeMillis,
     uint64_t decompressionTimeMillis
 ) {
-    uint64_t uncompressedTimestampSize = datapoints->count * sizeof(uint64_t);
-    uint64_t uncompressedValuesSize = datapoints->count * sizeof(uint64_t);
-    uint64_t compressedTimestampsSize = compressedTimestamps->length;
-    uint64_t compressedValuesSize = compressedValues->length;
-    float timestampsCompRatio = (float)uncompressedTimestampSize / compressedTimestampsSize;
-    float valuesCompRatio = (float)uncompressedValuesSize / compressedValuesSize;
-    float compRatio = (float)(uncompressedTimestampSize + uncompressedValuesSize)
-        / (compressedTimestampsSize + compressedValuesSize);
-    double compSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / compressionTimeMillis * 1000;
-    double decompSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) / decompressionTimeMillis * 1000;
+    uint64_t
+        uncompressedTimestampSize = datapoints->count * sizeof(uint64_t),
+        uncompressedValuesSize = datapoints->count * sizeof(uint64_t),
+        compressedTimestampsSize = compressedTimestamps->length,
+        compressedValuesSize = compressedValues->length;
+    double
+        timestampsCompRatio = (double)uncompressedTimestampSize / compressedTimestampsSize,
+        valuesCompRatio = (double)uncompressedValuesSize / compressedValuesSize,
+        compRatio = (double)(uncompressedTimestampSize + uncompressedValuesSize) 
+            / (compressedTimestampsSize + compressedValuesSize),
+        compSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) 
+            / compressionTimeMillis * 1000,
+        decompSpeed = (double)(uncompressedTimestampSize + uncompressedValuesSize) 
+            / decompressionTimeMillis * 1000;
 
     // Print statistic info
     printf("Timestamps: %lluB -> %lluB\n", uncompressedTimestampSize, compressedTimestampsSize);
@@ -249,11 +253,36 @@ static inline void printStat(
     printf("Decompression speed: %lfB/s, %lfKB/s, %lfMB/s\n", decompSpeed, decompSpeed / 1024, decompSpeed / (1024 * 1024));
 }
 
+// Print the statistic info of comprpessed timestamps or values
+static inline void printStat1(
+    DataPoints *datapoints,
+    ByteBuffer *compressedDatas,
+    uint64_t compressionTimeMillis,
+    uint64_t decompressionTimeMillis
+) {
+    uint64_t
+        uncompressedValuesSize = datapoints->count * sizeof(uint64_t),
+        compressedValuesSize = compressedDatas->length;
+    double
+        compRatio = (double)uncompressedValuesSize / compressedValuesSize,
+        compSpeed = (double)(uncompressedValuesSize) / compressionTimeMillis * 1000,
+        decompSpeed = (double)(uncompressedValuesSize) / decompressionTimeMillis * 1000;
+
+    // Print statistic info
+    printf("Data size: %lluB -> %lluB\n", uncompressedValuesSize, compressedValuesSize);
+    printf("Compression ratio: %lf\n", compRatio);
+    printf("Compression time: %llums\n", compressionTimeMillis);
+    printf("Compression speed: %lfB/s, %lfKB/s, %lfMB/s\n", compSpeed, compSpeed / 1024, compSpeed / (1024 * 1024));
+    printf("Decompression time: %llums\n", decompressionTimeMillis);
+    printf("Decompression speed: %lfB/s, %lfKB/s, %lfMB/s\n", decompSpeed, decompSpeed / 1024, decompSpeed / (1024 * 1024));
+}
+
+
 // locate the first different value
 static inline void compareByteBuffer(
     ByteBuffer *buffer1, ByteBuffer *buffer2, uint64_t count
 ) {
-    uint64_t 
+    uint64_t
         *buf1, *buf2;
 
     buf1 = (uint64_t*)buffer1->buffer;

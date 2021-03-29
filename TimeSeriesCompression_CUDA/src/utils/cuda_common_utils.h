@@ -17,10 +17,10 @@ static inline void check(const cudaError_t error, const char *const file, int co
     }
 }
 
-// Warming up for GPU
-__global__ static void warmingUp() {
-
-}
+//// Warming up for GPU
+//__global__ static void warmingUp() {
+//    cudaFree(0);
+//}
 
 // Verify the input params according to the 'count' for compression
 static inline void verifyParams(
