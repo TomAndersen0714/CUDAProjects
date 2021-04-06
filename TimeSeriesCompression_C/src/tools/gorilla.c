@@ -5,10 +5,10 @@ static const uint32_t DELTA_MASK_7 = 0b10 << 7;
 static const uint32_t DELTA_MASK_9 = 0b110 << 9;
 static const uint32_t DELTA_MASK_12 = 0b1110 << 12;
 
-ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
+ByteBuffer *timestamp_compress_gorilla(ByteBuffer *tsByteBuffer) {
     // Declare variables
     ByteBuffer *compressedTimestamps;
-    BitWriter* bitWriter;
+    BitWriter *bitWriter;
     int64_t timestamp, prevTimestamp = 0;
     int32_t newDelta, deltaOfDelta, prevDelta = 0;
     uint32_t leastBitLength;
@@ -103,10 +103,10 @@ ByteBuffer* timestamp_compress_gorilla(ByteBuffer* tsByteBuffer) {
     return compressedTimestamps;
 }
 
-ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
+ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
     // Declare variables
     ByteBuffer *compressedValues;
-    BitWriter* bitWriter;
+    BitWriter *bitWriter;
     int64_t value, prevValue = 0;
     uint32_t leadingZeros, trailingZeros, significantBits;
     uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
@@ -212,10 +212,10 @@ ByteBuffer* value_compress_gorilla(ByteBuffer* valByteBuffer) {
     return compressedValues;
 }
 
-ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count) {
+ByteBuffer *timestamp_decompress_gorilla(ByteBuffer *timestamps, uint64_t count) {
     // Declare variables
-    ByteBuffer* byteBuffer;
-    BitReader* bitReader;
+    ByteBuffer *byteBuffer;
+    BitReader *bitReader;
     int64_t timestamp, prevTimestamp = 0;
     int64_t newDelta, deltaOfDelta = 0, prevDelta = 0;
     uint64_t cursor = 0, *tsBuffer;
@@ -224,7 +224,7 @@ ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count)
     // Allocate memory space
     byteBuffer = malloc(sizeof(ByteBuffer));
     assert(byteBuffer != NULL);
-    byteBuffer->length = count * sizeof(uint64_t);
+    byteBuffer->length = count  *sizeof(uint64_t);
     byteBuffer->capacity = byteBuffer->length;
     byteBuffer->buffer = malloc(byteBuffer->length);
     assert(byteBuffer->buffer != NULL);
@@ -296,7 +296,7 @@ ByteBuffer* timestamp_decompress_gorilla(ByteBuffer* timestamps, uint64_t count)
     return byteBuffer;
 }
 
-ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
+ByteBuffer *value_decompress_gorilla(ByteBuffer *values, uint64_t count) {
     // Declare variables
     ByteBuffer *byteBuffer;
     BitReader *bitReader;
@@ -312,7 +312,7 @@ ByteBuffer* value_decompress_gorilla(ByteBuffer* values, uint64_t count) {
     // Allocate memory space
     byteBuffer = malloc(sizeof(ByteBuffer));
     assert(byteBuffer != NULL);
-    byteBuffer->length = count * sizeof(uint64_t);
+    byteBuffer->length = count  *sizeof(uint64_t);
     byteBuffer->capacity = byteBuffer->length;
     byteBuffer->buffer = malloc(byteBuffer->length);
     assert(byteBuffer->buffer != NULL);

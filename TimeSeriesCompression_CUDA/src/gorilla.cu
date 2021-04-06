@@ -166,7 +166,7 @@ CompressedData* timestamp_compress_gorilla_gpu(
     // total number of threads
     uint32_t
         // the number of data points
-        const count = (uint32_t)uncompressedBuffer->length / BYTES_OF_LONG_LONG;
+        const count = (uint32_t)(uncompressedBuffer->length / BYTES_OF_LONG_LONG);
     uint32_t
         thdPB, // the number of threads within per block
         thd; // the total number of needed threads
@@ -644,7 +644,7 @@ CompressedData *value_compress_gorilla_gpu(
     // declare
     uint32_t
         // the number of data points
-        const count = (uint32_t)uncompressedBuffer->length / BYTES_OF_LONG_LONG;
+        const count = (uint32_t)(uncompressedBuffer->length / BYTES_OF_LONG_LONG);
     uint32_t
         thdPB, // the number of threads within per block
         thd; // the total number of needed threads

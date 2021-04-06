@@ -170,7 +170,7 @@ CompressedData *value_compress_bitpack_gpu(
     // declare
     uint32_t
         // the number of data points
-        const count = (uint32_t)uncompressedBuffer->length / BYTES_OF_LONG_LONG;
+        const count = (uint32_t)(uncompressedBuffer->length / BYTES_OF_LONG_LONG);
     uint32_t
         thdPB, // the number of threads within per block
         thd; // the total number of needed threads
@@ -225,6 +225,101 @@ CompressedData *value_compress_bitpack_gpu(
         len_v, d_len_v, BYTES_OF_SHORT*thd,
         cudaMemcpyDeviceToHost)
     );
+
+    // free memory
+    checkCudaError(cudaFree(d_uncompressed_v));
+    checkCudaError(cudaFree(d_compressed_v));
+    checkCudaError(cudaFree(d_len_v));
+
+    // packing and return compressed data
+    CompressedData *compressedData =
+        (CompressedData*)malloc(sizeof(CompressedData));
+    assert(compressedData != NULL);
+    compressedData->buffer = compressed_v;
+    compressedData->lens = len_v;
+    compressedData->count = count;
+    compressedData->frame = frame;
+
+    return compressedData;
+}
+
+CompressedData *value_compress_bitpack_gpu_c(ByteBuffer *uncompressedBuffer, uint32_t block, uint32_t warp)
+{
+    // declare
+    uint32_t
+        // the number of data points
+        const count = (uint32_t)(uncompressedBuffer->length / BYTES_OF_LONG_LONG);
+    uint32_t
+        thdPB, // the number of threads within per block
+        thd; // the total number of needed threads
+    uint16_t
+        frame; // the length of data that each thread will compress
+
+               // divide the uncompressed data into frames according to the 
+               // total number of threads
+    thdPB = WARPSIZE*warp;
+    thd = thdPB*block;
+    frame = (count + thd - 1) / thd;
+    verifyParams(count, &frame, &block, &thdPB, &thd);
+
+    // allocate device memory and tranport data to device
+    uint64_t
+        *d_uncompressed_v; // uncompressed timestamps on device
+    byte
+        *d_compressed_v, // compressed timestamps on device
+        *compressed_v; // compressed timestamps on host
+    uint16_t
+        *d_len_v, // length of compressed timestamps on device
+        *len_v; // length of compressed timestamps on host
+
+    checkCudaError(cudaMalloc((void**)&d_uncompressed_v, uncompressedBuffer->length));
+    // pre-allocate as much memory for compressed data as uncompressed data
+    // assuming that compression will work well
+    checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    checkCudaError(cudaMalloc((void**)&d_len_v, BYTES_OF_SHORT*thd));
+    checkCudaError(cudaMemcpy(
+        d_uncompressed_v, uncompressedBuffer->buffer,
+        uncompressedBuffer->length, cudaMemcpyHostToDevice
+    ));
+
+    // use global __constant__ variables to pass the params to avoid passing common params between functions
+    checkCudaError(cudaMemcpyToSymbol(c_uncompressed_v, &d_uncompressed_v, sizeof(void *)));
+    checkCudaError(cudaMemcpyToSymbol(c_compressed_v, &d_compressed_v, sizeof(void *)));
+    checkCudaError(cudaMemcpyToSymbol(c_len_v, &d_len_v, sizeof(void *)));
+
+    // initiate kernal
+    value_compress_kernal<<<block, thdPB>>>(frame, thd, count);
+    checkCudaError(cudaDeviceSynchronize());
+
+    // allocate cpu memory for compressed data, and copy data from GPU to CPU
+    // get the length of each compressed frame
+    len_v = (uint16_t*)malloc(BYTES_OF_SHORT*thd);
+    assert(compressed_v != NULL && len_v != NULL);
+    checkCudaError(cudaMemcpy(
+        len_v, d_len_v, BYTES_OF_SHORT*thd,
+        cudaMemcpyDeviceToHost)
+    );
+
+    // get the total length of compressed data
+    uint64_t sum = 0;
+    for (uint32_t i = 0; i < thd; i++) {
+        sum += len_v[i];
+    }
+
+    // get the total length of compressed data
+    compressed_v = (byte*)malloc(sum);
+
+    byte
+        *cur_c = compressed_v, *d_cur_c = d_compressed_v;
+    uint32_t
+        step_d = frame * BYTES_OF_LONG_LONG;
+    for (uint32_t i = 0; i < thd; i++) {
+        checkCudaError(
+            cudaMemcpy(cur_c, d_cur_c, len_v[i], cudaMemcpyDeviceToHost)
+        );
+        cur_c += len_v[i];
+        d_cur_c += step_d;
+    }
 
     // free memory
     checkCudaError(cudaFree(d_uncompressed_v));

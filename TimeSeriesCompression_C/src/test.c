@@ -110,12 +110,12 @@ void test_textToBinary()
     char *inputPath, *ouputPath;
 
     inputPath = 
-        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT5";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT7_i";
     ouputPath = 
-        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT5_i_b_1280";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/IoT7_i_b";
 
     // transform the file
-    textToBinary(inputPath, ouputPath, _LONG_LONG, _LONG_LONG, 1280);
+    textToBinary(inputPath, ouputPath, _LONG_LONG, _LONG_LONG, 1);
 
 }
 
@@ -539,9 +539,9 @@ void test_gorilla_t()
 {
     // declare
     const char inputFilePath[] =
-        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_value/compression_ratio/Server97_i_b";
         //"dataset/testDataset3_fb";
-    const char dataset[] = "IoT5_i_b_20";
+    const char dataset[] = "Server97_i_b";
     DataPoints
         *dataPoints;
     clock_t
@@ -606,9 +606,9 @@ void test_gorilla_v()
 {
     // declare
     const char inputFilePath[] =
-        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_320";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
     //"dataset/testDataset3_fb";
-    const char dataset[] = "IoT5_i_b_320";
+    const char dataset[] = "IoT5_i_b_20";
     DataPoints
         *dataPoints;
     clock_t

@@ -544,13 +544,13 @@ void test_compress_rle_gpu()
 {
     // declare
     char inputFilePath[] =
-        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_value/compression_ratio/Server106_i_b";
         //"dataset/testDataset3_fb";
-    char dataset[] = "IoT5_i_b_20";
+    char dataset[] = "Server106_i_b";
     DataPoints
         *dataPoints;
     uint32_t
-        block = 8, warp = 32;
+        block = 8, warp = 16;
     uint64_t
         compressionTimeMillis, decompressionTimeMillis;
     clock_t timer;
@@ -577,10 +577,10 @@ void test_compress_rle_gpu()
     // compress the data points, and get the compressed data 
     // which is not compacted
     CompressedData *compressedData_t =
-        timestamp_compress_rle_gpu(tsByteBuffer, block, warp);
+        timestamp_compress_rle_gpu_c(tsByteBuffer, block, warp);
 
     // compact the compressed data
-    compactData(compressedData_t);
+    //compactData(compressedData_t);
 
     // print the compressed data
     //printCompressedData(compressedData_t);
@@ -624,12 +624,12 @@ void test_compress_bitpack_gpu()
 {
     // declare
     char inputFilePath[] =
-        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
-    char dataset[] = "IoT5_i_b_20";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_320";
+    char dataset[] = "IoT5_i_b_320";
     DataPoints
         *dataPoints;
     uint32_t
-        block = 8, warp = 32;
+        block = 4, warp = 32;
     uint64_t
         compressionTimeMillis, decompressionTimeMillis;
     clock_t
@@ -657,10 +657,10 @@ void test_compress_bitpack_gpu()
     // compress the data points, and get the compressed data 
     // which is not compacted
     CompressedData *compressedData_v =
-        value_compress_bitpack_gpu(valByteBuffer, block, warp);
+        value_compress_bitpack_gpu_c(valByteBuffer, block, warp);
 
     // compact the compressed data
-    compactData(compressedData_v);
+    //compactData(compressedData_v);
 
     // print the compressed data
     //printCompressedData(compressedData_v);
@@ -705,12 +705,12 @@ void test_compress_bucket_gpu()
 {
     // declare
     char inputFilePath[] = 
-        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/throughput/Server43_640_b";
-    char dataset[] = "Server43_640_b";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/compression_ratio/IoT7_b";
+    char dataset[] = "IoT7_b";
     DataPoints
         *dataPoints;
     uint32_t
-        block = 8, warp = 32;
+        block = 4, warp = 16;
     uint64_t
         compressionTimeMillis, decompressionTimeMillis;
     clock_t
@@ -720,7 +720,9 @@ void test_compress_bucket_gpu()
     dataPoints = readUncompressedFile_b(inputFilePath);
 
     // print the last 32 data points
-    printDatapoints(dataPoints);
+    //printDatapoints(dataPoints);
+
+    warmUp();
 
     timer = clock();
 
@@ -736,10 +738,10 @@ void test_compress_bucket_gpu()
     // compress the data points, and get the compressed data 
     // which is not compacted
     CompressedData *compressedData_v =
-        value_compress_bucket_gpu(valByteBuffer, block, warp);
+        value_compress_bucket_gpu_c(valByteBuffer, block, warp);
 
     // compact the compressed data
-    compactData(compressedData_v);
+    //compactData(compressedData_v);
 
     // print the compressed data
     //printCompressedData(compressedData_v);
@@ -761,7 +763,7 @@ void test_compress_bucket_gpu()
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
     // print the decompressed data
-    printDecompressedData(decompressedData_v, dataPoints->valueType);
+    //printDecompressedData(decompressedData_v, dataPoints->valueType);
 
     // print stat info
     printf("%s\n", dataset);
