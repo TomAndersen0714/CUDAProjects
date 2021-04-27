@@ -192,11 +192,12 @@ static inline void printDataPoints(const DataPoints* const dataPoints) {
         dataPoints->timestampType == _LONG_LONG
         &&dataPoints->valueType == _DOUBLE
         ) {
+        double *d_val = (double*)dataPoints->values;
         for (uint64_t i = offset; i < dataPoints->count; i++) {
             printf(
                 "%llu\t%lf\n",
                 dataPoints->timestamps[i],
-                dataPoints->values[i]
+                d_val[i]
             );
         }
     }

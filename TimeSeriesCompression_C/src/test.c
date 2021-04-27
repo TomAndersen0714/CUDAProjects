@@ -5,6 +5,7 @@
 #include "tools/decompressors.h"
 #include "tools/io_utils.h"
 #include "tools/timer_utils.h"
+#include "tools/bucket_counter.h"
 #include "test.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -242,59 +243,75 @@ void test_gorilla()
 //////////////////////////////////////////////////////////////////////////
 void test_rle()
 {
-    // Declare variables
-    char *base_dir = "dataset/";
-    char *dataset = "testDataset4";
-    char *inputFilePath;
-    FILE *inputFile;
-    DataPoints *dataPoints;
-    //ValueType timestampType = _LONG_LONG, valueType = _LONG_LONG;// 测试整型值情况
-    ValueType timestampType = _LONG_LONG, valueType = _DOUBLE; // 测试浮点型值情况
+    // declare
+    const char inputFilePath[] =
+        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/compression_ratio/IoT1_i_b";
+    //"dataset/testDataset3_fb";
+    const char dataset[] = "IoT1_i_b";
+    DataPoints
+        *dataPoints;
+    clock_t
+        timer, compressionTimeMillis, decompressionTimeMillis;
 
-    inputFilePath = (char *)malloc(strlen(base_dir) + strlen(dataset) + 1);
-    assert(inputFilePath != NULL);
-    strcpy(inputFilePath, base_dir);
-    strcat(inputFilePath, dataset);
+    // read the uncompressed data in binary format
+    dataPoints = readUncompressedFile_b(inputFilePath);
 
-    // Read the uncompressed data points
-    inputFile = fopen(inputFilePath, "r");
-    assert(inputFile != NULL);
-
-    dataPoints = readUncompressedFile(
-        inputFile, timestampType, valueType);
-
-    // Print the uncompressed data points
+    // Print uncompressed data points
     printDataPoints(dataPoints);
 
+    //timer = unixMillisecondTimestamp();
+    timer = clock();
+
     //////////////////////////////////////////////////////////////////////////
-    // 测试: timestamp_compress_rle
+    // 测试 compressors.h: timestamp_compress_gorilla
 
     // Construct the buffer for uncompressed timestamps
     ByteBuffer *tsByteBuffer = (ByteBuffer *)malloc(sizeof(ByteBuffer));
-    assert(tsByteBuffer != NULL);
     tsByteBuffer->buffer = (byte *)dataPoints->timestamps;
     tsByteBuffer->length = dataPoints->count * sizeof(uint64_t);
     tsByteBuffer->capacity = tsByteBuffer->length;
-    assert(tsByteBuffer->buffer != NULL);
 
     // Compress the timestamps of data points
     ByteBuffer *compressedTimestamps =
         timestamp_compress_rle(tsByteBuffer);
 
-    printCompressedData(compressedTimestamps);
+    //printCompressedData(compressedTimestamps);
     //////////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////////
-    // 测试: timestamp_decompress_rle
-    ByteBuffer *decompressedTimestamps =
-        timestamp_decompress_rle(compressedTimestamps, dataPoints->count);
+    compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+    timer = clock();
 
-    printDecompressedData(decompressedTimestamps, timestampType);
     //////////////////////////////////////////////////////////////////////////
+    // 测试 decompressors.h: timestamp_decompress_gorilla
 
-    // Free the allocated resources
-    fclose(inputFile);
-    free(inputFilePath);
+    ByteBuffer *decompressedTimestamps = timestamp_decompress_rle(
+        compressedTimestamps, dataPoints->count
+    );
+
+    //////////////////////////////////////////////////////////////////////////
+    decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
+
+    printDecompressedData(decompressedTimestamps, dataPoints->timestampType);
+
+    // print stat result
+    printf("%s\n", dataset);
+    printStat1(
+        dataPoints,
+        compressedTimestamps,
+        compressionTimeMillis,
+        decompressionTimeMillis
+    );
+
+    // print distribution of timestamp sequence
+    uint64_t *buk = getBuk();
+    uint64_t size = getBukSize();
+
+    for (uint16_t i = 0; i < size; i++) {
+        printf("%llu\t", *(buk + i));
+    }
+    printf("\n");
+
+    // free the allocated memory
     freeByteBuffer(compressedTimestamps);
     freeByteBuffer(decompressedTimestamps);
     freeDataPoints(dataPoints);
@@ -606,9 +623,9 @@ void test_gorilla_v()
 {
     // declare
     const char inputFilePath[] =
-        "C:/Users/DELL/Desktop/TSDataset/experiment/integer_timestamp/throughput/IoT5_i_b_20";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/compression_ratio/IoT1_b";
     //"dataset/testDataset3_fb";
-    const char dataset[] = "IoT5_i_b_20";
+    const char dataset[] = "IoT1_b";
     DataPoints
         *dataPoints;
     clock_t
@@ -641,6 +658,17 @@ void test_gorilla_v()
     compressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
     timer = clock();
 
+    // print distribution of timestamp sequence
+    uint64_t *buk = getBuk();
+    uint64_t size = getBukSize();
+
+    for (uint16_t i = 0; i < size; i++) {
+        printf("%llu\n", *(buk + i));
+    }
+    printf("\n");
+    clearBuk();
+
+
     //////////////////////////////////////////////////////////////////////////
     // 测试 compressors.h: value_decompress_gorilla
 
@@ -648,6 +676,15 @@ void test_gorilla_v()
         compressedValues, dataPoints->count);
 
     //////////////////////////////////////////////////////////////////////////
+
+    // print distribution of timestamp sequence
+    buk = getBuk();
+    size = getBukSize();
+    for (uint16_t i = 0; i < size; i++) {
+        printf("%llu\n", *(buk + i));
+    }
+    printf("\n");
+    clearBuk();
 
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 

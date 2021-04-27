@@ -1,5 +1,6 @@
 #include "compressors.h"
 #include "decompressors.h"
+#include "bucket_counter.h"
 
 static const uint32_t DELTA_MASK_3 = 0b10 << 3;
 static const uint32_t DELTA_MASK_5 = 0b110 << 5;
@@ -74,8 +75,11 @@ ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
         deltaOfDelta = newDelta - prevDelta;
 
         // If current delta and previous one is same
-        if (deltaOfDelta == 0)
+        if (deltaOfDelta == 0) {
             storedZeros++;// Counting the continuous and same delta of timestamps
+            //
+            bukAdd(0);
+        }
         else {
             // Write the privious stored zeros to the buffer.
             flushZeros(bitWriter, &storedZeros);
@@ -92,11 +96,15 @@ ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
             case 1:
             case 2:
             case 3:
+                //
+                bukAdd(1);
                 // '10'+3
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_3, 5);
                 break;
             case 4:
             case 5:
+                //
+                bukAdd(2);
                 // '110'+5
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_5, 8);
                 break;
@@ -104,6 +112,8 @@ ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
             case 7:
             case 8:
             case 9:
+                //
+                bukAdd(3);
                 // '1110'+9
                 bitWriterWriteBits(bitWriter, deltaOfDelta | DELTA_MASK_9, 13);
                 break;
@@ -111,6 +121,8 @@ ByteBuffer * timestamp_compress_rle(ByteBuffer * tsByteBuffer) {
             case 11:
             case 12:
             default:
+                //
+                bukAdd(4);
                 // '1111'+32
                 bitWriterWriteBits(bitWriter, 0b1111, 4); // Write '1111' control bits.
                 // Since it only takes 4 bytes(i.e. 32 bits) to save a unix timestamp in seconds, we write

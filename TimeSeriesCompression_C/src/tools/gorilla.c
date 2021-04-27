@@ -1,5 +1,6 @@
 #include "compressors.h"
 #include "decompressors.h"
+#include "bucket_counter.h"
 
 static const uint32_t DELTA_MASK_7 = 0b10 << 7;
 static const uint32_t DELTA_MASK_9 = 0b110 << 9;
@@ -48,6 +49,8 @@ ByteBuffer *timestamp_compress_gorilla(ByteBuffer *tsByteBuffer) {
         if (deltaOfDelta == 0) {
             // Write '0' bit as control bit(i.e. previous and current delta value is same).
             bitWriterWriteZeroBit(bitWriter);
+            //
+            bukAdd(0);
         }
         else {
             // Tips: since deltaOfDelta == 0 is unoccupied, we can utilize it to cover a larger range.
@@ -56,6 +59,8 @@ ByteBuffer *timestamp_compress_gorilla(ByteBuffer *tsByteBuffer) {
             deltaOfDelta = encodeZigZag32(deltaOfDelta);
 
             leastBitLength = BITS_OF_INT - leadingZerosCount32(deltaOfDelta);
+            //
+            bukAdd(leastBitLength);
             // Match the deltaOfDelta to the these case as follow.
             switch (leastBitLength) {
             case 0:
@@ -112,7 +117,7 @@ ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
     uint32_t prevLeadingZeros = BITS_OF_LONG_LONG;
     uint32_t prevTrailingZeros = BITS_OF_LONG_LONG;
     uint64_t 
-        diff, cursor = 0,
+        xor, cursor = 0,
         count = valByteBuffer->length / sizeof(uint64_t),
         *uncompressed_v = (uint64_t*)valByteBuffer->buffer;
 
@@ -144,19 +149,24 @@ ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
 
         // Calculate the XOR difference between prediction and current value to be compressed.
         value = uncompressed_v[cursor++];
-        diff = prevValue^value;
+        xor = prevValue^value;
 
         // updata previous value
         prevValue = value;
 
         // If previous value and current value is same
-        if (diff == 0) {
+        if (xor == 0) {
             // Write '0' bit as entire control bit(i.e. prediction and current value is same).
             bitWriterWriteZeroBit(bitWriter);
+            //
+            bukAdd(0);
         }
         else {
-            leadingZeros = leadingZerosCount64(diff);
-            trailingZeros = trailingZerosCount64(diff);
+            leadingZeros = leadingZerosCount64(xor);
+            trailingZeros = trailingZerosCount64(xor);
+
+            //
+            bukAdd(64 - leadingZeros);
 
             // Write '1' bit as first control bit.
             bitWriterWriteOneBit(bitWriter);
@@ -166,7 +176,7 @@ ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
             // the previous value.
             if (leadingZeros >= prevLeadingZeros && trailingZeros >= prevTrailingZeros) {
                 // Write current value into previous scope
-                //writeInPrevScope(diff);
+                //writeInPrevScope(xor);
 
                 // Write '0' bit as second control bit.
                 bitWriterWriteZeroBit(bitWriter);
@@ -174,11 +184,11 @@ ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
                 // Write significant bits of difference value input the scope.
                 significantBits = BITS_OF_LONG_LONG - prevLeadingZeros - prevTrailingZeros;
 
-                bitWriterWriteBits(bitWriter, diff >> prevTrailingZeros, significantBits);
+                bitWriterWriteBits(bitWriter, xor >> prevTrailingZeros, significantBits);
             }
             else {
                 // Write current value into new scope
-                //writeInNewScope(diff, leadingZeros, trailingZeros);
+                //writeInNewScope(xor, leadingZeros, trailingZeros);
 
                 // Write '1' bit as second control bit.
                 bitWriterWriteOneBit(bitWriter);
@@ -198,7 +208,7 @@ ByteBuffer *value_compress_gorilla(ByteBuffer *valByteBuffer) {
                 bitWriterWriteBits(bitWriter, significantBits - 1, 6);// Write the length of meaningful bits input the next 6 bits
 
                 // Write the meaningful bits of XOR
-                bitWriterWriteBits(bitWriter, diff >> trailingZeros, significantBits);
+                bitWriterWriteBits(bitWriter, xor >> trailingZeros, significantBits);
             }
             // Update the number of leading and trailing zeros.
             prevLeadingZeros = leadingZeros;
@@ -388,6 +398,8 @@ ByteBuffer *value_decompress_gorilla(ByteBuffer *values, uint64_t count) {
             break;
         }
         // return value;
+        //
+        bukAdd(64 - leadingZerosCount64(value));
         // Store current value into data buffer
         decompressed_v[cursor++] = value;
     }
