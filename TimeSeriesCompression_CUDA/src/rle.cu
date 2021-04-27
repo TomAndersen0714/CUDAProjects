@@ -313,7 +313,8 @@ CompressedData *timestamp_compress_rle_gpu_c(ByteBuffer * uncompressedBuffer, ui
     checkCudaError(cudaMalloc((void**)&d_uncompressed_t, uncompressedBuffer->length));
     // pre-allocate as much memory for compressed data as uncompressed data
     // assuming that compression will work well
-    checkCudaError(cudaMalloc((void**)&d_compressed_t, uncompressedBuffer->length));
+    //checkCudaError(cudaMalloc((void**)&d_compressed_t, uncompressedBuffer->length));
+    d_compressed_t = (byte*)d_uncompressed_t;
     checkCudaError(cudaMalloc((void**)&d_len_t, BYTES_OF_SHORT*thd));
     checkCudaError(cudaMemcpy(
         d_uncompressed_t, uncompressedBuffer->buffer,
@@ -359,7 +360,7 @@ CompressedData *timestamp_compress_rle_gpu_c(ByteBuffer * uncompressedBuffer, ui
 
     // free memory
     checkCudaError(cudaFree(d_uncompressed_t));
-    checkCudaError(cudaFree(d_compressed_t));
+    //checkCudaError(cudaFree(d_compressed_t));
     checkCudaError(cudaFree(d_len_t));
 
     // packing and return compressed data which is incompact yet

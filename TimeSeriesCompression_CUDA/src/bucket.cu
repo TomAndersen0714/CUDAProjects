@@ -22,10 +22,10 @@ __device__ static inline void value_compress_device(
 
     // declare
     int64_t
-        value, prevValue;
+        value, preValue;
     uint32_t
         leadingZeros, trailingZeros, significantBits,
-        prevLeadingZeros, prevTrailingZeros,
+        preLeadingZeros, preTrailingZeros,
         diffLeadingZeros, diffSignificantBits, leastSignificantBits;
     uint64_t
         xor,
@@ -34,23 +34,23 @@ __device__ static inline void value_compress_device(
     // since the header of current frame has been written(i.e. 
     // 'start' must >=1), we can get the previous value and 
     // 'diff' as follow
-    prevValue = uncompressed_v[start - 1];
-    if (prevValue == 0) {
-        prevLeadingZeros = 0;
-        prevTrailingZeros = 0;
+    preValue = uncompressed_v[start - 1];
+    if (preValue == 0) {
+        preLeadingZeros = 0;
+        preTrailingZeros = 0;
     }
     else {
-        /*prevLeadingZeros = leadingZerosCount64(prevValue);
-        prevTrailingZeros = trailingZerosCount64(prevValue);*/
-        prevLeadingZeros = __clzll(prevValue);
-        prevTrailingZeros = __ffsll(prevValue) - 1;
+        /*preLeadingZeros = leadingZerosCount64(preValue);
+        preTrailingZeros = trailingZerosCount64(preValue);*/
+        preLeadingZeros = __clzll(preValue);
+        preTrailingZeros = __ffsll(preValue) - 1;
     }
 
     // compress every value in the specific scope of uncompressed buffer
     for (int cur = start; cur < end; cur++) {
         // get next value and calculate the xor value with previous one
         value = uncompressed_v[cur];
-        xor = prevValue^value;
+        xor = preValue^value;
 
         if (xor == 0) {// case A:
                        // write '11' bit as entire control bit(i.e. prediction and current value is same).
@@ -65,23 +65,23 @@ __device__ static inline void value_compress_device(
             // if the scope of meaningful bits falls within the scope of previous meaningful bits,
             // i.e. there are at least as many leading zeros and as many trailing zeros as with
             // the previous value.
-            if (leadingZeros >= prevLeadingZeros && trailingZeros >= prevTrailingZeros) {
+            if (leadingZeros >= preLeadingZeros && trailingZeros >= preTrailingZeros) {
                 // case B
                 // Write '10' as control bit
                 bitWriterWriteBits(bitWriter, 0b10, 2);
 
                 // Write significant bits of difference value input the scope.
-                significantBits = BITS_OF_LONG_LONG - prevLeadingZeros - prevTrailingZeros;
-                bitWriterWriteBits(bitWriter, xor >> prevTrailingZeros, significantBits);
+                significantBits = BITS_OF_LONG_LONG - preLeadingZeros - preTrailingZeros;
+                bitWriterWriteBits(bitWriter, xor >> preTrailingZeros, significantBits);
             }
             else {// case C:
                   // Write '0' bit as second control bit.
                 bitWriterWriteBits(bitWriter, 0b0, 1);
 
                 significantBits = BITS_OF_LONG_LONG - leadingZeros - trailingZeros;
-                diffLeadingZeros = encodeZigZag32(leadingZeros - prevLeadingZeros);
+                diffLeadingZeros = encodeZigZag32(leadingZeros - preLeadingZeros);
                 diffSignificantBits = encodeZigZag32(
-                    leadingZeros + trailingZeros - prevLeadingZeros - prevTrailingZeros
+                    leadingZeros + trailingZeros - preLeadingZeros - preTrailingZeros
                 );
 
                 //leastSignificantBits = BITS_OF_INT - leadingZerosCount32(diffLeadingZeros);
@@ -150,12 +150,12 @@ __device__ static inline void value_compress_device(
                 bitWriterWriteBits(bitWriter, xor >> trailingZeros, significantBits - 1);
             }
             // update the number of leading and trailing zeros.
-            prevLeadingZeros = leadingZeros;
-            prevTrailingZeros = trailingZeros;
+            preLeadingZeros = leadingZeros;
+            preTrailingZeros = trailingZeros;
         }
 
         // update previous value
-        prevValue = value;
+        preValue = value;
     }
 
     // write the left bits in cached byte into the buffer.
@@ -324,7 +324,8 @@ CompressedData *value_compress_bucket_gpu_c(
     checkCudaError(cudaMalloc((void**)&d_uncompressed_v, uncompressedBuffer->length));
     // pre-allocate as much memory for compressed data as uncompressed data
     // assuming that compression will work well
-    checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    //checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    d_compressed_v = (byte*)d_uncompressed_v;
     checkCudaError(cudaMalloc((void**)&d_len_v, BYTES_OF_SHORT*thd));
     checkCudaError(cudaMemcpy(
         d_uncompressed_v, uncompressedBuffer->buffer,
@@ -372,7 +373,7 @@ CompressedData *value_compress_bucket_gpu_c(
 
     // free memory
     checkCudaError(cudaFree(d_uncompressed_v));
-    checkCudaError(cudaFree(d_compressed_v));
+    //checkCudaError(cudaFree(d_compressed_v));
     checkCudaError(cudaFree(d_len_v));
 
     // packing and return compressed data

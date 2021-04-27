@@ -187,46 +187,11 @@ void test_compress_gorilla_gpu()
 
     //////////////////////////////////////////////////////////////////////////
 
-    /*
-    // declare
-    byte
-    *buffer = compressedData_t->buffer,
-    *slow = buffer,
-    *fast = buffer;
-    uint16_t
-    frame = compressedData_t->frame,
-    *lens = compressedData_t->lens;
-    uint32_t
-    count = compressedData_t->count,
-    thd = (count + frame - 1) / frame;
-    uint64_t
-    frame_b = frame*BYTES_OF_LONG_LONG;
 
-    // compact the compressed data
-    for (uint32_t i = 0; i < thd; i++) {
-    assert(lens[i] <= frame_b);
-    memmove(slow, fast, lens[i]);
-    slow += lens[i];
-    fast += frame_b;
-    }*/
-    // compact the compressed data
+    // compact the compressed timestamps
     compactData(compressedData_t);
 
-    /*
-    // declare
-    buffer = compressedData_v->buffer;
-    slow = buffer;
-    fast = buffer;
-    lens = compressedData_v->lens;
-
-    // compact the compressed data
-    for (uint32_t i = 0; i < thd; i++) {
-    assert(lens[i] <= frame_b);
-    memmove(slow, fast, lens[i]);
-    slow += lens[i];
-    fast += frame_b;
-    }*/
-    // compact the compressed data
+    // compact the compressed values
     compactData(compressedData_v);
 
     // print the compressed data
@@ -259,8 +224,6 @@ void test_compress_gorilla_gpu()
     
     // print the decompressed data
     printDecompressedData(decompressedData_t, dataPoints->timestampType);
-
-    // print the decompressed data
     printDecompressedData(decompressedData_v, dataPoints->valueType);
 
     // print stat info 
@@ -561,7 +524,7 @@ void test_compress_rle_gpu()
     dataPoints = readUncompressedFile_b(inputFilePath);
 
     // print the last 32 data points
-    //printDatapoints(dataPoints);
+    printDatapoints(dataPoints);
 
     timer = clock();
 
@@ -602,7 +565,7 @@ void test_compress_rle_gpu()
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
     // print the decompressed data
-    //printDecompressedData(decompressedData_t, dataPoints->timestampType);
+    printDecompressedData(decompressedData_t, dataPoints->timestampType);
 
     printf("%s\n", dataset);
     printf("block:%d, warp:%d, count: %lu, frame: %u\n",
@@ -641,7 +604,7 @@ void test_compress_bitpack_gpu()
     dataPoints = readUncompressedFile_b(inputFilePath);
 
     // print the last 32 data points
-    //printDatapoints(dataPoints);
+    printDatapoints(dataPoints);
 
     timer = clock();
 
@@ -682,7 +645,7 @@ void test_compress_bitpack_gpu()
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
     // print the decompressed data
-    //printDecompressedData(decompressedData_v, dataPoints->valueType);
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
 
     // print stat info
     printf("%s\n", dataset);
@@ -705,8 +668,9 @@ void test_compress_bucket_gpu()
 {
     // declare
     char inputFilePath[] = 
-        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/compression_ratio/IoT7_b";
-    char dataset[] = "IoT7_b";
+        "C:/Users/DELL/Desktop/TSDataset/experiment/float_value/throughput/Server43_320_b";
+    char dataset[] = 
+        "Server43_320_b";
     DataPoints
         *dataPoints;
     uint32_t
@@ -720,7 +684,7 @@ void test_compress_bucket_gpu()
     dataPoints = readUncompressedFile_b(inputFilePath);
 
     // print the last 32 data points
-    //printDatapoints(dataPoints);
+    printDatapoints(dataPoints);
 
     warmUp();
 
@@ -763,7 +727,7 @@ void test_compress_bucket_gpu()
     decompressionTimeMillis = (clock() - timer) * 1000 / CLOCKS_PER_SEC;
 
     // print the decompressed data
-    //printDecompressedData(decompressedData_v, dataPoints->valueType);
+    printDecompressedData(decompressedData_v, dataPoints->valueType);
 
     // print stat info
     printf("%s\n", dataset);

@@ -24,16 +24,16 @@ __device__ static inline void value_compress_device(
 
     // declare
     uint16_t
-        pos = 0, maxLeastSignificantBits = 0;
+        pos = 0, maxSignificantBits = 0;
     int64_t 
         value, prevValue;
     uint64_t
-        diff, subframe[DEFAULT_SUBFRAME_SIZE],
+        delta, subframe[DEFAULT_SUBFRAME_SIZE],
         *uncompressed_v = c_uncompressed_v;
 
     // since the header of current frame has been written(i.e. 
     // 'start' must >=1), we can get the previous value and 
-    // 'diff' as follow
+    // 'delta' as follow
     prevValue = uncompressed_v[start - 1];
 
     // compress every value in the specific scope of uncompressed buffer
@@ -43,71 +43,71 @@ __device__ static inline void value_compress_device(
         
         // if current sub-frame is full, then flush it
         if (pos == DEFAULT_SUBFRAME_SIZE) {
-            // if all values in the frame equals zero(i.e. 'maxLeastSignificantBits' equals 0)
+            // if all values in the frame equals zero(i.e. 'maxSignificantBits' equals 0)
             // we just store the 0b0 in next 6 bits and clear frame
-            if (maxLeastSignificantBits == 0) {
+            if (maxSignificantBits == 0) {
                 bitWriterWriteBits(bitWriter, 0b0, 6);
                 pos = 0;
             }
             else {
-                // Since 'maxLeastSignificantBits' could vary within [1,64], and the possibility 
-                // when 'maxLeastSignificantBits' equals 1 is very small, we merge this situation
-                // into the othor one that 'maxLeastSignificantBits' equals 2 to cover [0~64] using
+                // Since 'maxSignificantBits' could vary within [1,64], and the possibility 
+                // when 'maxSignificantBits' equals 1 is very small, we merge this situation
+                // into the othor one that 'maxSignificantBits' equals 2 to cover [0~64] using
                 // 6 bits
-                if (maxLeastSignificantBits == 1) maxLeastSignificantBits++;
-                bitWriterWriteBits(bitWriter, maxLeastSignificantBits - 1, 6);
+                if (maxSignificantBits == 1) maxSignificantBits++;
+                bitWriterWriteBits(bitWriter, maxSignificantBits - 1, 6);
 
                 // write the significant bits of every value in current sub-frame into buffer
                 for (int i = 0; i < pos; i++) {
-                    bitWriterWriteBits(bitWriter, subframe[i], maxLeastSignificantBits);
+                    bitWriterWriteBits(bitWriter, subframe[i], maxSignificantBits);
                 }
 
                 // reset the pos and the maximum number of least significant bit in the sub-frame
                 pos = 0;
-                maxLeastSignificantBits = 0;
+                maxSignificantBits = 0;
             }
         }
 
         // calculate the difference between current and previous value
-        diff = encodeZigZag64(value - prevValue);
+        delta = encodeZigZag64(value - prevValue);
         // update previous value
         prevValue = value;
 
         // update the maximum number of least significant bit.
-        /*maxLeastSignificantBits =
-            max(maxLeastSignificantBits, 
-                BITS_OF_LONG_LONG - leadingZerosCount64(diff));*/
-        maxLeastSignificantBits =
-            max(maxLeastSignificantBits, BITS_OF_LONG_LONG - __clzll(diff));
+        /*maxSignificantBits =
+            max(maxSignificantBits, 
+                BITS_OF_LONG_LONG - leadingZerosCount64(delta));*/
+        maxSignificantBits =
+            max(maxSignificantBits, BITS_OF_LONG_LONG - __clzll(delta));
 
-        // store encoded diff value in sub-frame.
-        subframe[pos++] = diff;
+        // store encoded delta value in sub-frame.
+        subframe[pos++] = delta;
     }
 
     // flush the left value in sub-frame into buffer
     if (pos != 0) {
         // if all value in this sub-frame equals zero, we just store the 
         // 0b0 in next 6 bits
-        if (maxLeastSignificantBits == 0) {
+        if (maxSignificantBits == 0) {
             bitWriterWriteBits(bitWriter, 0b0, 6);
         }
         else {
-            // Since 'maxLeastSignificantBits' could vary within [1,64], and the possibility 
-            // when 'maxLeastSignificantBits' equals 1 is very small, we merge this situation
-            // into the othor one that 'maxLeastSignificantBits' equals 2 to cover [0~64] using
+            // Since 'maxSignificantBits' could vary within [1,64], and the possibility 
+            // when 'maxSignificantBits' equals 1 is very small, we merge this situation
+            // into the othor one that 'maxSignificantBits' equals 2 to cover [0~64] using
             // 6 bits
-            if (maxLeastSignificantBits == 1) maxLeastSignificantBits++;
-            bitWriterWriteBits(bitWriter, maxLeastSignificantBits - 1, 6);
+            if (maxSignificantBits == 1) maxSignificantBits++;
+            bitWriterWriteBits(bitWriter, maxSignificantBits - 1, 6);
 
             // write the significant bits of every value in current sub-frame into buffer.
             for (int i = 0; i < pos; i++) {
-                bitWriterWriteBits(bitWriter, subframe[i], maxLeastSignificantBits);
+                bitWriterWriteBits(bitWriter, subframe[i], maxSignificantBits);
             }
         }
 
         // reset the pos and the maximum number of least significant bit in the sub-frame.
         pos = 0;
-        maxLeastSignificantBits = 0;
+        maxSignificantBits = 0;
     }
 
     // write the left bits in cached byte into the buffer.
@@ -275,7 +275,8 @@ CompressedData *value_compress_bitpack_gpu_c(ByteBuffer *uncompressedBuffer, uin
     checkCudaError(cudaMalloc((void**)&d_uncompressed_v, uncompressedBuffer->length));
     // pre-allocate as much memory for compressed data as uncompressed data
     // assuming that compression will work well
-    checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    //checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    d_compressed_v = (byte*)d_uncompressed_v;
     checkCudaError(cudaMalloc((void**)&d_len_v, BYTES_OF_SHORT*thd));
     checkCudaError(cudaMemcpy(
         d_uncompressed_v, uncompressedBuffer->buffer,
@@ -323,7 +324,7 @@ CompressedData *value_compress_bitpack_gpu_c(ByteBuffer *uncompressedBuffer, uin
 
     // free memory
     checkCudaError(cudaFree(d_uncompressed_v));
-    checkCudaError(cudaFree(d_compressed_v));
+    //checkCudaError(cudaFree(d_compressed_v));
     checkCudaError(cudaFree(d_len_v));
 
     // packing and return compressed data
@@ -352,7 +353,7 @@ __device__ static inline void value_decompress_device(
     uint64_t
         *decompressed_v = c_decompressed_v;
     uint32_t
-        pos = DEFAULT_FRAME_SIZE, maxLeastSignificantBits = 0;
+        pos = DEFAULT_SUBFRAME_SIZE, maxLeastSignificantBits = 0;
     
     // cause the header of current frame has been decided(i.e. 
     // 'start' must >=1), we can get the previous value as follow
@@ -363,7 +364,7 @@ __device__ static inline void value_decompress_device(
     for (uint32_t cursor = start; cursor < end; cursor++) {
         // if current compressed subframe reach the end, read maximum number of least
         // significant bit in next subframe
-        if (pos == DEFAULT_FRAME_SIZE) {
+        if (pos == DEFAULT_SUBFRAME_SIZE) {
             maxLeastSignificantBits = (uint32_t)bitReaderNextLong(bitReader, 6);
             pos = 0;
             // since we compressed 'maxLeastSignificantBits-1' into buffer before,

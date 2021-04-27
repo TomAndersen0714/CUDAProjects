@@ -196,7 +196,8 @@ CompressedData* timestamp_compress_gorilla_gpu(
     checkCudaError(cudaMalloc((void**)&d_uncompressed_t, uncompressedBuffer->length));
     // pre-allocate as much memory for compressed data as uncompressed data
     // assuming that compression will work well
-    checkCudaError(cudaMalloc((void**)&d_compressed_t, uncompressedBuffer->length));
+    //checkCudaError(cudaMalloc((void**)&d_compressed_t, uncompressedBuffer->length));
+    d_compressed_t = (byte*)d_uncompressed_t;
     checkCudaError(cudaMalloc((void**)&d_len_t, BYTES_OF_SHORT*thd));
     //checkCudaError(cudaMalloc((void**)&d_offs, BYTES_OF_INT*(thds + 1)));
     checkCudaError(cudaMemcpy(
@@ -235,7 +236,7 @@ CompressedData* timestamp_compress_gorilla_gpu(
     
     // free memory
     checkCudaError(cudaFree(d_uncompressed_t));
-    checkCudaError(cudaFree(d_compressed_t));
+    //checkCudaError(cudaFree(d_compressed_t));
     checkCudaError(cudaFree(d_len_t));
 
     // packing and return compressed data
@@ -671,7 +672,8 @@ CompressedData *value_compress_gorilla_gpu(
     checkCudaError(cudaMalloc((void**)&d_uncompressed_v, uncompressedBuffer->length));
     // pre-allocate as much memory for compressed data as uncompressed data
     // assuming that compression will work well
-    checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    //checkCudaError(cudaMalloc((void**)&d_compressed_v, uncompressedBuffer->length));
+    d_compressed_v = (byte*)d_uncompressed_v;
     checkCudaError(cudaMalloc((void**)&d_len_v, BYTES_OF_SHORT*thd));
     checkCudaError(cudaMemcpy(
         d_uncompressed_v, uncompressedBuffer->buffer,
@@ -702,7 +704,7 @@ CompressedData *value_compress_gorilla_gpu(
 
     // free memory
     checkCudaError(cudaFree(d_uncompressed_v));
-    checkCudaError(cudaFree(d_compressed_v));
+    //checkCudaError(cudaFree(d_compressed_v));
     checkCudaError(cudaFree(d_len_v));
 
     // packing and return compressed data
